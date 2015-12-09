@@ -1,0 +1,15 @@
+//
+//  PrefixHeader.pch
+//  KLTCharViews
+//
+//  Created by 田凯 on 15/12/9.
+//  Copyright © 2015年 netease. All rights reserved.
+//
+
+#ifndef PrefixHeader_pch
+#define PrefixHeader_pch
+#define WEAK_SELF(weakSelf)		__weak __typeof(&*self)weakSelf = self;
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+#endif /* PrefixHeader_pch */
