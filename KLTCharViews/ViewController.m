@@ -15,6 +15,10 @@
     
 }
 @property (strong,nonatomic) UIScrollView *scrollView;
+@property (strong,nonatomic) KLTPieChartView *pieView;
+@property (strong,nonatomic) KLTLineChartView *lineChartView;
+@property (strong,nonatomic) KLTColumnChartView *columnChartView;
+@property (strong,nonatomic) UIButton *refreshBtn;
 @end
 
 @implementation ViewController
@@ -25,10 +29,12 @@
     [self.view addSubview:self.scrollView];
     WEAK_SELF(weakSelf);
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self demo_pieChart];
-        [self demo_lineChart];
-        [self demo_columnChart];
-        weakSelf.scrollView.contentSize = CGSizeMake(weakSelf.view.bounds.size.width, 570);
+        [self.scrollView addSubview:self.columnChartView];
+        [self.scrollView addSubview:self.lineChartView];
+        [self.scrollView addSubview:self.pieView];
+        [self.scrollView addSubview:self.refreshBtn];
+        weakSelf.scrollView.contentSize = CGSizeMake(weakSelf.view.bounds.size.width, 570+50);
+        [weakSelf refresh];
     });
     
 }
@@ -38,9 +44,17 @@
     // Dispose of any resources that can be recreated.
 }
 
+- (IBAction)doTapRefreshBtn:(id)sender{
+    [self refresh];
+}
+
+- (void)refresh{
+    [self demo_pieChart];
+    [self demo_lineChart];
+    [self demo_columnChart];
+}
 - (void)demo_columnChart{
-    KLTColumnChartView *columnChartView = [[KLTColumnChartView alloc] initWithFrame:CGRectMake(0, 420, self.view.bounds.size.width, 150)];
-    [self.scrollView addSubview:columnChartView];
+    KLTColumnChartView *columnChartView = self.columnChartView;
     
     NSMutableArray<KLTColumnChartItem *> *columnItems = [@[] mutableCopy];
     {
@@ -83,7 +97,7 @@
 }
 
 - (void)demo_lineChart{
-    KLTLineChartView *lineChartView = [[KLTLineChartView alloc] initWithFrame:CGRectMake(0, 220, self.view.bounds.size.width, 200)];
+    KLTLineChartView *lineChartView = self.lineChartView;
     [lineChartView setBackgroundColor:[UIColor whiteColor]];
     [lineChartView setNumberOfVerticalLines:2];
     [lineChartView setNumberOfHorizontalLines:5];
@@ -133,12 +147,11 @@
 
 
 - (void)demo_pieChart{
-    KLTPieChartView *pieView = [[KLTPieChartView alloc] initWithFrame:CGRectMake(0, 20, self.view.bounds.size.width, 200)];
+    KLTPieChartView *pieView = self.pieView;
     pieView.radius = 80;
     pieView.pieWidth = 30;
     //    pieView.value_100 = 350;
     pieView.showDescrition = YES;
-    [self.view addSubview:pieView];
     
     NSDictionary *attrDic = @{
                               NSFontAttributeName : [UIFont systemFontOfSize:12],
@@ -207,5 +220,38 @@
     _scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     return _scrollView;
 }
-
+- (KLTColumnChartView *)columnChartView{
+    if (_columnChartView) {
+        return _columnChartView;
+    }
+    _columnChartView = [[KLTColumnChartView alloc] initWithFrame:CGRectMake(0, 420, self.view.bounds.size.width, 150)];
+    _columnChartView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    return _columnChartView;
+}
+- (KLTLineChartView *)lineChartView{
+    if (_lineChartView) {
+        return _lineChartView;
+    }
+    _lineChartView = [[KLTLineChartView alloc] initWithFrame:CGRectMake(0, 220, self.view.bounds.size.width, 200)];
+    _lineChartView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    return _lineChartView;
+}
+- (KLTPieChartView *)pieView{
+    if (_pieView) {
+        return _pieView;
+    }
+    _pieView = [[KLTPieChartView alloc] initWithFrame:CGRectMake(0, 20, self.view.bounds.size.width, 200)];
+    _pieView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    return _pieView;
+}
+- (UIButton *)refreshBtn{
+    if (_refreshBtn) {
+        return _refreshBtn;
+    }
+    _refreshBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 570, self.view.bounds.size.width, 50)];
+    [_refreshBtn setTitle:@"Refresh" forState:UIControlStateNormal];
+    [_refreshBtn addTarget:self action:@selector(doTapRefreshBtn:) forControlEvents:UIControlEventTouchUpInside];
+    [_refreshBtn setTitleColor:[UIColor blueColor] forState:UIControlStateNormal];
+    return _refreshBtn;
+}
 @end

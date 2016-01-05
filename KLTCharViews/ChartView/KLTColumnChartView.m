@@ -20,6 +20,7 @@ static const CGFloat maxColumnWidth = 20;   //每个柱子的最大宽度
 static const CGFloat preOffsetTime = 0.05; //每个柱子开始动画的间隔时间
 static const CGFloat animDuration = 0.5;
 static const CGFloat cornerRadiu = 2.5; //柱形图圆角半径
+
 @implementation KLTColumnChartItem
 
 - (NSDictionary *)attrOfDesc{
@@ -61,8 +62,13 @@ static const CGFloat cornerRadiu = 2.5; //柱形图圆角半径
 
 @end
 
+
 @implementation KLTColumnChartView{
     BOOL _autoComputeRange;
+    CAShapeLayer * _originLineLayer;
+    NSMutableArray *_columnsLayers;
+    NSMutableArray *_descLbs;
+    NSMutableArray *_titleLbs;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame{
@@ -77,16 +83,28 @@ static const CGFloat cornerRadiu = 2.5; //柱形图圆角半径
 }
 
 - (void)showWithAnimation:(BOOL)isAnimation{
+    //删除原有图层
+    [_originLineLayer removeFromSuperlayer];
+    for (CALayer *layer in _columnsLayers) {
+        [layer removeFromSuperlayer];
+    }
+    for (UIView *view in _descLbs) {
+        [view removeFromSuperview];
+    }
+    for (UIView *view in _titleLbs) {
+        [view removeFromSuperview];
+    }
+    
     CGFloat charHeight = CGRectGetHeight(self.bounds) - verticalPadding * 2 - titleDivHeight;
     CGFloat charWidth = CGRectGetWidth(self.bounds) - horizontalPaddin * 2;
     CGFloat vRate = charHeight / (_maxValue - _minValue);
     CGPoint originP = CGPointMake(horizontalPaddin, verticalPadding+(_maxValue - _originValue)*vRate);
     CGFloat lineWidthPixel = lineWidth / [UIScreen mainScreen].scale;
     
-    NSMutableArray * columnsLayers = [@[] mutableCopy];
-    NSMutableArray * descLbs = [@[] mutableCopy];
+    NSMutableArray * columnsLayers = [NSMutableArray arrayWithCapacity:_columns.count];
+    NSMutableArray * descLbs = [NSMutableArray arrayWithCapacity:_columns.count];
+    NSMutableArray * titleLbs = [NSMutableArray arrayWithCapacity:_columns.count];
     
-    WEAK_SELF(weakSelf);
     //添加原点线
     {
         CAShapeLayer * originLineLayer = [CAShapeLayer layer];
@@ -96,8 +114,11 @@ static const CGFloat cornerRadiu = 2.5; //柱形图圆角半径
         originLineLayer.path = path.CGPath;
         originLineLayer.lineWidth = lineWidthPixel;
         originLineLayer.strokeColor = _colorOfOriginLine.CGColor;
-        [weakSelf.layer addSublayer:originLineLayer];
+        [self.layer addSublayer:originLineLayer];
+        _originLineLayer = originLineLayer;
     }
+    
+    WEAK_SELF(weakSelf);
     //添加柱形图
     CGFloat columnWidth = (charWidth - spacePreColumn * (_columns.count + 1)) / _columns.count;
     columnWidth = MAX(maxColumnWidth, columnWidth);
@@ -126,6 +147,7 @@ static const CGFloat cornerRadiu = 2.5; //柱形图圆角半径
         lbTitle.textAlignment = NSTextAlignmentCenter;
         lbTitle.adjustsFontSizeToFitWidth = YES;
         lbTitle.attributedText = [[NSAttributedString alloc] initWithString:obj.title attributes:obj.attrOfTitle];
+        [titleLbs addObject:lbTitle];
         [weakSelf addSubview:lbTitle];
     }];
     //添加desc文字
@@ -201,6 +223,10 @@ static const CGFloat cornerRadiu = 2.5; //柱形图圆角半径
         }];
         
     }
+    
+    _columnsLayers = columnsLayers;
+    _descLbs = descLbs;
+    _titleLbs = titleLbs;
 }
 
 #pragma mark - getter setter
