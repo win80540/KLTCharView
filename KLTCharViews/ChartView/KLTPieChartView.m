@@ -14,7 +14,8 @@ static const CGFloat bg_space = 10;
 static const CGFloat distence_line_circle = 4;
 static const CGFloat distence_line_edge = 10;
 static const CGFloat des_line_PointR = 2;
-static const CGFloat pieSpace = 0.003;
+static const CGFloat pieSpace = 0.0015;
+static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自动修补
 #pragma mark - KLTPieItem
 @interface KLTPieItem (){
     
@@ -25,6 +26,7 @@ static const CGFloat pieSpace = 0.003;
 @property (assign,nonatomic) double percentage;
 @property (assign,nonatomic) double text_offsetPre; //textView的角度偏移
 @property (assign,nonatomic) BOOL showText; //因跟其他textView重叠而不予显示
+@property (assign,nonatomic) BOOL isFixed; //是否因为比重太小而修补过
 @end
 @implementation KLTPieItem
 
@@ -110,14 +112,26 @@ static const CGFloat pieSpace = 0.003;
     _pieContainerLayer = [CALayer layer];
     
     WEAK_SELF(weakSelf);
-    [_pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull currentPie, NSUInteger idx, BOOL * _Nonnull stop) {
+    if (_pieItems.count>1) { //大于1个pie 需要有间隙
+        [_pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull currentPie, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (currentPie.value != 0) {
+                CAShapeLayer *pieLayer = [weakSelf newPieLayerWithRadius:_radius
+                                                                   width:_pieWidth
+                                                               fillColor:currentPie.pieColor
+                                                         startPercentage:currentPie.startPercentage+pieSpace
+                                                           endPercentage:currentPie.endPercentage-pieSpace];
+                [_pieLayers addObject: pieLayer];
+            }
+        }];
+    }else if(_pieItems.count == 1){ //只有1个pie 不需要有间隙
+        KLTPieItem *currentPie = _pieItems[0];
         CAShapeLayer *pieLayer = [weakSelf newPieLayerWithRadius:_radius
-                                                            width:_pieWidth
-                                                        fillColor:currentPie.pieColor
-                                                  startPercentage:currentPie.startPercentage+pieSpace
-                                                    endPercentage:currentPie.endPercentage-pieSpace];
+                                                           width:_pieWidth
+                                                       fillColor:currentPie.pieColor
+                                                 startPercentage:currentPie.startPercentage
+                                                   endPercentage:currentPie.endPercentage];
         [_pieLayers addObject: pieLayer];
-    }];
+    }
     
     //添加新背景环layer
     [self.layer addSublayer:self.bgLayer];
@@ -297,24 +311,48 @@ static const CGFloat pieSpace = 0.003;
 
 #pragma mark getter setter
 - (void)setPieItems:(NSArray<KLTPieItem *> *)pieItems{
-    _pieItems = @[];
     if (pieItems.count==0) {
         return;
     }
     //以pieItems生成pieLayers
-    _pieItems = [pieItems copy];
-    
     //处理
     __block double sum = _value_100;
     if (sum == 0){
-        [_pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             sum += [obj value];
         }];
     }
-    for (NSUInteger i=0; i<_pieItems.count; i++) {
-        KLTPieItem *currentPie = _pieItems[i];
-        currentPie.startPercentage = i>0?_pieItems[i-1].endPercentage:0.0;
-        currentPie.percentage = currentPie.value/sum;;
+    CGFloat fixedPercentage = 0;
+    NSUInteger fixedPieNumders = 0;
+    NSMutableArray *canAdjustPies = [@[] mutableCopy];
+    for (NSUInteger i=0; i<pieItems.count; i++) {
+        //第一次遍历修补小于最小宽度的pie
+        KLTPieItem *currentPie = pieItems[i];
+        currentPie.percentage = currentPie.value/sum;
+        if (currentPie.percentage > 0 && currentPie.percentage < minPieSpace){
+            fixedPercentage = minPieSpace - currentPie.percentage;
+            fixedPieNumders ++;
+            currentPie.isFixed = YES;
+            currentPie.percentage = minPieSpace;
+        }
+    }
+    for (NSUInteger i=0; i<pieItems.count; i++) {
+        //第二次遍历找出可以出让宽度的pie
+        KLTPieItem *currentPie = pieItems[i];
+        if (currentPie.isFixed) {
+            continue;
+        }
+        if(currentPie.percentage - fixedPercentage/(pieItems.count-fixedPieNumders)*4>minPieSpace){
+            [canAdjustPies addObject:currentPie];
+        }
+    }
+    for (KLTPieItem *currentPie in canAdjustPies) {
+        //出让宽度
+        currentPie.percentage = currentPie.percentage - fixedPercentage/canAdjustPies.count;
+    }
+    for (NSUInteger i=0; i<pieItems.count; i++) {
+        KLTPieItem *currentPie = pieItems[i];
+        currentPie.startPercentage = i>0?pieItems[i-1].endPercentage:0.0;
         currentPie.endPercentage = currentPie.startPercentage + currentPie.percentage;
         currentPie.midPrecentage = (currentPie.endPercentage + currentPie.startPercentage)/2; //获取当前pie的中位百分比
         currentPie.showText = YES;
@@ -322,6 +360,13 @@ static const CGFloat pieSpace = 0.003;
             _offsetAngular -=  M_PI_4*0.30;
         }
     }
+    NSMutableArray *notZeroPie = [NSMutableArray arrayWithCapacity:pieItems.count];
+    [pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if(obj.percentage >= minPieSpace) {
+            [notZeroPie addObject:obj];
+        }
+    }];
+    _pieItems = [notZeroPie copy];
 }
 
 - (CAShapeLayer *)maskAnmLayer{
