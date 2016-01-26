@@ -10,7 +10,7 @@
 #import "KLTColumnChartView.h"
 #import "KLTLineChartView.h"
 #import "KLTPieChartView.h"
-@interface ViewController ()<KLTLineChartDataSource>
+@interface ViewController ()<KLTLineChartDataSource,KLTLineChartDelegate>
 {
     
 }
@@ -104,6 +104,7 @@
     [lineChartView setColorOfVerticalLines:[UIColor clearColor]];
     [lineChartView setColorOfHorizontalLines:[UIColor colorWithWhite:0.7 alpha:0.5]];
     lineChartView.dataSource = self;
+    lineChartView.delegate = self;
     [self.view addSubview:lineChartView];
     
     NSMutableArray *lines = [@[] mutableCopy];
@@ -210,7 +211,12 @@
 - (NSString *)titleOfVerticalIndex:(NSUInteger)idx withValue:(double)value{
     return [NSString stringWithFormat:@"%.2lf At %ld",value,idx];
 }
-
+- (UIColor *)colorForHorizontalSeparateLineOfIndex:(NSUInteger)idx{
+    if (idx == 0) {
+        return [UIColor redColor];
+    }
+    return [UIColor clearColor];
+}
 #pragma mark Getter Setter
 - (UIScrollView *)scrollView{
     if (_scrollView) {

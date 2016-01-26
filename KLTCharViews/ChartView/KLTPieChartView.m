@@ -316,42 +316,39 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
     }
     //以pieItems生成pieLayers
     //处理
-    __block double sum = _value_100;
+    double maxPer = 1.0;
+    __block double sum = 0;
     if (sum == 0){
         [pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             sum += [obj value];
         }];
     }
-    CGFloat fixedPercentage = 0;
-    NSUInteger fixedPieNumders = 0;
-    NSMutableArray *canAdjustPies = [@[] mutableCopy];
+    if (_value_100 > 0) {
+        maxPer = sum / _value_100;
+    }
+    
+    double minV = DBL_MAX;
+    double maxV = DBL_MIN;
+    NSUInteger pieCount = 0;
     for (NSUInteger i=0; i<pieItems.count; i++) {
-        //第一次遍历修补小于最小宽度的pie
+        //取最小值
         KLTPieItem *currentPie = pieItems[i];
-        currentPie.percentage = currentPie.value/sum;
-        if (currentPie.percentage > 0 && currentPie.percentage < minPieSpace){
-            fixedPercentage = minPieSpace - currentPie.percentage;
-            fixedPieNumders ++;
-            currentPie.isFixed = YES;
-            currentPie.percentage = minPieSpace;
+        if (currentPie.value > 0) {
+            minV = MIN(minV, currentPie.value);
+            maxV = MAX(maxV, currentPie.value);
+            pieCount++;
         }
     }
+    
+    double remainPer = maxPer - minPieSpace*pieCount;
+    double rate = remainPer / (sum - minV*pieCount);
+    
     for (NSUInteger i=0; i<pieItems.count; i++) {
-        //第二次遍历找出可以出让宽度的pie
         KLTPieItem *currentPie = pieItems[i];
-        if (currentPie.isFixed) {
+        if (currentPie.value < minV) {
             continue;
         }
-        if(currentPie.percentage - fixedPercentage/(pieItems.count-fixedPieNumders)*4>minPieSpace){
-            [canAdjustPies addObject:currentPie];
-        }
-    }
-    for (KLTPieItem *currentPie in canAdjustPies) {
-        //出让宽度
-        currentPie.percentage = currentPie.percentage - fixedPercentage/canAdjustPies.count;
-    }
-    for (NSUInteger i=0; i<pieItems.count; i++) {
-        KLTPieItem *currentPie = pieItems[i];
+        currentPie.percentage = rate * (currentPie.value - minV) + minPieSpace;
         currentPie.startPercentage = i>0?pieItems[i-1].endPercentage:0.0;
         currentPie.endPercentage = currentPie.startPercentage + currentPie.percentage;
         currentPie.midPrecentage = (currentPie.endPercentage + currentPie.startPercentage)/2; //获取当前pie的中位百分比
@@ -368,6 +365,64 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
     }];
     _pieItems = [notZeroPie copy];
 }
+//- (void)setPieItems:(NSArray<KLTPieItem *> *)pieItems{
+//    if (pieItems.count==0) {
+//        return;
+//    }
+//    //以pieItems生成pieLayers
+//    //处理
+//    __block double sum = _value_100;
+//    if (sum == 0){
+//        [pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//            sum += [obj value];
+//        }];
+//    }
+//    CGFloat fixedPercentage = 0;
+//    NSUInteger fixedPieNumders = 0;
+//    NSMutableArray *canAdjustPies = [@[] mutableCopy];
+//    for (NSUInteger i=0; i<pieItems.count; i++) {
+//        //第一次遍历修补小于最小宽度的pie
+//        KLTPieItem *currentPie = pieItems[i];
+//        currentPie.percentage = currentPie.value/sum;
+//        if (currentPie.percentage > 0 && currentPie.percentage < minPieSpace){
+//            fixedPercentage = minPieSpace - currentPie.percentage;
+//            fixedPieNumders ++;
+//            currentPie.isFixed = YES;
+//            currentPie.percentage = minPieSpace;
+//        }
+//    }
+//    for (NSUInteger i=0; i<pieItems.count; i++) {
+//        //第二次遍历找出可以出让宽度的pie
+//        KLTPieItem *currentPie = pieItems[i];
+//        if (currentPie.isFixed) {
+//            continue;
+//        }
+//        if(currentPie.percentage - fixedPercentage/(pieItems.count-fixedPieNumders)*4>minPieSpace){
+//            [canAdjustPies addObject:currentPie];
+//        }
+//    }
+//    for (KLTPieItem *currentPie in canAdjustPies) {
+//        //出让宽度
+//        currentPie.percentage = currentPie.percentage - fixedPercentage/canAdjustPies.count;
+//    }
+//    for (NSUInteger i=0; i<pieItems.count; i++) {
+//        KLTPieItem *currentPie = pieItems[i];
+//        currentPie.startPercentage = i>0?pieItems[i-1].endPercentage:0.0;
+//        currentPie.endPercentage = currentPie.startPercentage + currentPie.percentage;
+//        currentPie.midPrecentage = (currentPie.endPercentage + currentPie.startPercentage)/2; //获取当前pie的中位百分比
+//        currentPie.showText = YES;
+//        if (ABS(currentPie.midPrecentage - 0.25) <= 0.05) {         //不让其出现顶部垂直现象
+//            _offsetAngular -=  M_PI_4*0.30;
+//        }
+//    }
+//    NSMutableArray *notZeroPie = [NSMutableArray arrayWithCapacity:pieItems.count];
+//    [pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//        if(obj.percentage >= minPieSpace) {
+//            [notZeroPie addObject:obj];
+//        }
+//    }];
+//    _pieItems = [notZeroPie copy];
+//}
 
 - (CAShapeLayer *)maskAnmLayer{
     if (_maskAnimLayer) {

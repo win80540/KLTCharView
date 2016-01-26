@@ -14,8 +14,10 @@ static const CGFloat horizontalPadding = 15;
 static const CGFloat verticalPadding = 15;
 static const CGFloat widthOfBGLine = 1; //表格的网格线宽度
 static const CGFloat widthOfLine = 1; //折线宽度
-static const CGFloat autoComputeVRangeRate = 0.2; //纵向留空百分比
-static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
+static const CGFloat autoComputeVRangeMAXRate = 0.2; //顶部留空百分比
+static const CGFloat autoComputeVRangeMINRate = 0.2; //底部留空百分比
+static const CGFloat autoComputeHRangeMAXRate = 0.0; //左部留空百分比
+static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 
 #pragma mark - Interface
 
@@ -44,7 +46,8 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
     CGFloat _chartWidth ;
     CGFloat _chartHeight ;
     CGPoint _originP ;
-    BOOL _autoComputeRange;
+    BOOL _autoComputeVRange;
+    BOOL _autoComputeHRange;
 }
 @property (strong,nonatomic) UIView *containerView;
 @property (strong,nonatomic) CAShapeLayer *bgLayer;
@@ -166,14 +169,28 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
 
 @implementation KLTLineChartView
 
-- (instancetype)initWithFrame:(CGRect)frame{
-    self = [super initWithFrame:frame];
-    if (self) {
-        [self configSelf];
+- (instancetype)init{
+    if (self = [super init]) {
+        [self __initialize];
     }
     return self;
 }
+- (instancetype)initWithFrame:(CGRect)frame{
+    if (self = [super initWithFrame:frame]) {
+        [self __initialize];
+    }
+    return self;
+}
+- (instancetype)initWithCoder:(NSCoder *)aDecoder{
+    if (self = [super initWithCoder:aDecoder]) {
+        [self __initialize];
+    }
+    return self;
+}
+
 - (void)displayWithAnimation:(BOOL)isAnimation{
+    [self setNeedsDisplay];
+    
     _chartWidth = self.bounds.size.width - verticalTitleSpace-horizontalPadding*2;
     _chartHeight = self.bounds.size.height - (horizontalTitleSpace+verticalPadding)*2;
     _originP = CGPointMake(verticalTitleSpace+horizontalPadding, _chartHeight+verticalPadding+horizontalTitleSpace);
@@ -214,7 +231,7 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
 
 #pragma mark Private Method
 //设置一些初始化参数
-- (void)configSelf{
+- (void)__initialize{
     [self setBackgroundColor:[UIColor colorWithWhite:0.9 alpha:1]];
     [self setUserInteractionEnabled:YES];
     _colorOfHorizontalLines = [UIColor colorWithWhite:0.8 alpha:1];
@@ -231,7 +248,8 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
                               };
     _attributeOfHorizontalText = attrDic;
     _attributeOfVerticalText = attrDic;
-    _autoComputeRange = YES;
+    _autoComputeVRange = YES;
+    _autoComputeHRange = YES;
     [self rangeChanged];
 }
 
@@ -241,9 +259,29 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
     _valueOfPreVerticalGird = (_maxValueOfVertical - _minValueOfVertical) / (_numberOfHorizontalLines-1);
 }
 
-//自动计算图表的x和y的范围
-- (void)autoComputeRage{
-    __block double minH,maxH,minV,maxV;
+//自动计算图表y的范围
+- (void)autoComputeVRage{
+    __block double minV=DBL_MAX,maxV=DBL_MIN;
+    //取得最大最小值
+    [_lines enumerateObjectsUsingBlock:^(KLTLineChartLine * _Nonnull line, NSUInteger lineIdx, BOOL * _Nonnull lineStop) {
+        [line.points enumerateObjectsUsingBlock:^(KLTLineChartPoint * _Nonnull point, NSUInteger pointIdx, BOOL * _Nonnull pointStop) {
+            if(point.valueOfVertical >= maxV){
+                maxV = point.valueOfVertical;
+            }
+            if (point.valueOfVertical <= minV) {
+                minV = point.valueOfVertical;
+            }
+        }];
+    }];
+    double rangeV = maxV - minV;
+    //修改刻度范围
+    _maxValueOfVertical = maxV+autoComputeVRangeMAXRate*rangeV;
+    _minValueOfVertical = minV-autoComputeVRangeMINRate*rangeV;
+    [self rangeChanged];
+}
+//自动计算图表x的范围
+- (void)autoComputeHRage{
+    __block double minH=DBL_MAX,maxH=DBL_MIN;
     //取得最大最小值
     [_lines enumerateObjectsUsingBlock:^(KLTLineChartLine * _Nonnull line, NSUInteger lineIdx, BOOL * _Nonnull lineStop) {
        [line.points enumerateObjectsUsingBlock:^(KLTLineChartPoint * _Nonnull point, NSUInteger pointIdx, BOOL * _Nonnull pointStop) {
@@ -253,21 +291,12 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
            if (point.valueOfHorizontal <= minH) {
                minH = point.valueOfHorizontal;
            }
-           if(point.valueOfVertical >= maxV){
-               maxV = point.valueOfVertical;
-           }
-           if (point.valueOfVertical <= minV) {
-               minV = point.valueOfVertical;
-           }
        }];
     }];
-    double rangeV = maxV - minV;
     double rangeH = maxH - minH;
     //修改刻度范围
-    _maxValueOfHorizontal = maxH+autoComputeHRangeRate*rangeH;
-    _minValueOfHorizontal = minH;
-    _maxValueOfVertical = maxV+autoComputeVRangeRate*rangeV;
-    _minValueOfVertical = minV;
+    _maxValueOfHorizontal = maxH+autoComputeHRangeMAXRate*rangeH;
+    _minValueOfHorizontal = minH-autoComputeHRangeMINRate*rangeH;
     [self rangeChanged];
 }
 
@@ -309,26 +338,54 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
     CGContextRef context = UIGraphicsGetCurrentContext();
     
     //画出背景竖线
-    CGContextSetStrokeColorWithColor(context, _colorOfVerticalLines.CGColor);
     {
-        UIBezierPath * path = [UIBezierPath bezierPath];
-        for (NSUInteger i = 0; i<_numberOfVerticalLines; i++) {
-            [path moveToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y)];
-            [path addLineToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y-_chartHeight)];
+        if ([self.delegate respondsToSelector:@selector(colorForVerticalSeparateLineOfIndex:)]){
+            //实现了颜色回调时进入该流程，严重影响性能
+            for (NSUInteger i = 0; i<_numberOfVerticalLines; i++) {
+                UIBezierPath * path = [UIBezierPath bezierPath];
+                [path moveToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y)];
+                [path addLineToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y-_chartHeight)];
+                path.lineWidth = widthOfBGLine / scale / 2;
+                UIColor *color = [self.delegate colorForVerticalSeparateLineOfIndex:i];
+                CGContextSetStrokeColorWithColor(context, color.CGColor);
+                [path stroke];
+            }
+        }else if(![_colorOfVerticalLines isEqual:[UIColor clearColor]]){
+            //未实现颜色回调并且不为无色时进入
+            CGContextSetStrokeColorWithColor(context, _colorOfVerticalLines.CGColor);
+            UIBezierPath * path = [UIBezierPath bezierPath];
+            for (NSUInteger i = 0; i<_numberOfVerticalLines; i++) {
+                [path moveToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y)];
+                [path addLineToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y-_chartHeight)];
+            }
+            path.lineWidth = widthOfBGLine / scale / 2;
+            [path stroke];
         }
-        path.lineWidth = widthOfBGLine / scale / 2;
-        [path stroke];
     }
     //画出背景横线
-    CGContextSetStrokeColorWithColor(context, _colorOfHorizontalLines.CGColor);
     {
-        UIBezierPath * path = [UIBezierPath bezierPath];
-        for (NSUInteger i = 0; i<_numberOfHorizontalLines; i++) {
-            [path moveToPoint:CGPointMake(_originP.x , _originP.y - verticalSpace * i)];
-            [path addLineToPoint:CGPointMake(_originP.x + _chartWidth, _originP.y - verticalSpace * i)];
+        if ([self.delegate respondsToSelector:@selector(colorForHorizontalSeparateLineOfIndex:)]) {
+            //实现了颜色回调时进入该流程，严重影响性能
+            for (NSUInteger i = 0; i<_numberOfHorizontalLines; i++) {
+                UIBezierPath * path = [UIBezierPath bezierPath];
+                [path moveToPoint:CGPointMake(_originP.x , _originP.y - verticalSpace * i)];
+                [path addLineToPoint:CGPointMake(_originP.x + _chartWidth, _originP.y - verticalSpace * i)];
+                path.lineWidth = widthOfBGLine / scale / 2;
+                UIColor *color = [self.delegate colorForHorizontalSeparateLineOfIndex:i];
+                CGContextSetStrokeColorWithColor(context, color.CGColor);
+                [path stroke];
+            }
+        }else if(![_colorOfHorizontalLines isEqual:[UIColor clearColor]]){
+            //未实现颜色回调并且不为无色时进入
+            CGContextSetStrokeColorWithColor(context, _colorOfHorizontalLines.CGColor);
+            UIBezierPath * path = [UIBezierPath bezierPath];
+            for (NSUInteger i = 0; i<_numberOfHorizontalLines; i++) {
+                [path moveToPoint:CGPointMake(_originP.x , _originP.y - verticalSpace * i)];
+                [path addLineToPoint:CGPointMake(_originP.x + _chartWidth, _originP.y - verticalSpace * i)];
+            }
+            path.lineWidth = widthOfBGLine / scale / 2;
+            [path stroke];
         }
-        path.lineWidth = widthOfBGLine / scale / 2;
-        [path stroke];
     }
     //写出X轴单位
     {
@@ -345,6 +402,10 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
                 pointToDraw = CGPointMake(_originP.x + horizontalSpace * i - size.width, _originP.y);
             }else{
                 pointToDraw = CGPointMake(_originP.x + horizontalSpace * i - size.width/2.0, _originP.y);
+            }
+            if([self.delegate respondsToSelector:@selector(titleOffsetOfHorizontalIndex:)]){
+                CGSize offsetSize = [self.delegate titleOffsetOfHorizontalIndex:i];
+                pointToDraw = CGPointMake(pointToDraw.x + offsetSize.width, pointToDraw.y + offsetSize.height);
             }
             [title drawAtPoint:pointToDraw withAttributes:_attributeOfHorizontalText];
         }
@@ -363,7 +424,11 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
             }else if(i==_numberOfHorizontalLines - 1){
                 pointToDraw = CGPointMake(_originP.x - size.width-5, _originP.y - verticalSpace * i);
             }else{
-                pointToDraw = CGPointMake(_originP.x - size.width-5, _originP.y - verticalSpace * i - size.height);
+                pointToDraw = CGPointMake(_originP.x - size.width-5, _originP.y - verticalSpace * i - size.height/2.0);
+            }
+            if([self.delegate respondsToSelector:@selector(titleOffsetOfVerticalIndex:)]){
+                CGSize offsetSize = [self.delegate titleOffsetOfVerticalIndex:i];
+                pointToDraw = CGPointMake(pointToDraw.x + offsetSize.width, pointToDraw.y + offsetSize.height);
             }
             [title drawAtPoint:pointToDraw withAttributes:_attributeOfVerticalText];
         }
@@ -412,28 +477,31 @@ static const CGFloat autoComputeHRangeRate = 0.1; //横向留空百分比
 }
 - (void)setMaxValueOfHorizontal:(double)maxValueOfHorizontal{
     _maxValueOfHorizontal = maxValueOfHorizontal;
-    _autoComputeRange = NO;
+    _autoComputeHRange = NO;
     [self rangeChanged];
 }
 - (void)setMaxValueOfVertical:(double)maxValueOfVertical{
     _maxValueOfVertical = maxValueOfVertical;
-    _autoComputeRange = NO;
+    _autoComputeVRange = NO;
     [self rangeChanged];
 }
 - (void)setMinValueOfHorizontal:(double)minValueOfHorizontal{
     _minValueOfHorizontal = minValueOfHorizontal;
-    _autoComputeRange = NO;
+    _autoComputeHRange = NO;
     [self rangeChanged];
 }
 - (void)setMinValueOfVertical:(double)minValueOfVertical{
     _minValueOfVertical = minValueOfVertical;
-    _autoComputeRange = NO;
+    _autoComputeVRange = NO;
     [self rangeChanged];
 }
 - (void)setLines:(NSArray<KLTLineChartLine *> *)lines{
     _lines = [lines copy];
-    if (_autoComputeRange) {
-        [self autoComputeRage];
+    if (_autoComputeVRange) {
+        [self autoComputeVRage];
+    }
+    if (_autoComputeHRange) {
+        [self autoComputeHRage];
     }
 }
 @end

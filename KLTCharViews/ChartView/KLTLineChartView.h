@@ -13,6 +13,13 @@
 - (NSString *)titleOfHorizontalIndex:(NSUInteger)idx withValue:(double)value;
 - (NSString *)titleOfVerticalIndex:(NSUInteger)idx withValue:(double)value;
 @end
+@protocol KLTLineChartDelegate <NSObject>
+@optional
+- (CGSize)titleOffsetOfHorizontalIndex:(NSUInteger)idx;
+- (CGSize)titleOffsetOfVerticalIndex:(NSUInteger)idx;
+- (UIColor *)colorForHorizontalSeparateLineOfIndex:(NSUInteger)idx;
+- (UIColor *)colorForVerticalSeparateLineOfIndex:(NSUInteger)idx;
+@end
 
 @interface KLTLineChartPoint : NSObject
 @property (assign, nonatomic) double valueOfHorizontal;
@@ -29,6 +36,8 @@
 
 @interface KLTLineChartView : UIView
 @property (weak,nonatomic)  id<KLTLineChartDataSource> dataSource;
+
+@property (weak,nonatomic)  id<KLTLineChartDelegate> delegate;
 
 @property (strong,nonatomic) NSArray<KLTLineChartLine *> *lines;
 
