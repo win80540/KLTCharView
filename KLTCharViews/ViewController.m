@@ -105,7 +105,6 @@
     [lineChartView setColorOfHorizontalLines:[UIColor colorWithWhite:0.7 alpha:0.5]];
     lineChartView.dataSource = self;
     lineChartView.delegate = self;
-    [self.view addSubview:lineChartView];
     
     NSMutableArray *lines = [@[] mutableCopy];
     {

@@ -40,7 +40,7 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
     NSMutableArray<CAShapeLayer *> *_circleLayers;
     NSMutableArray<UIView *> *_textViews;
 }
-
+@property (strong, atomic) NSMutableArray<CAShapeLayer *> *pieLayers;
 @property (strong, nonatomic) CAShapeLayer *maskAnimLayer;
 @property (strong, nonatomic) CAShapeLayer *bgLayer;
 //@property (strong, nonatomic) UIView * pieContainterView;
@@ -108,19 +108,20 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
     [_bgLayer removeFromSuperlayer];
     [_pieContainerLayer removeFromSuperlayer];
     
-    _pieLayers = [@[] mutableCopy];
+    self.pieLayers = [@[] mutableCopy];
     _pieContainerLayer = [CALayer layer];
     
     WEAK_SELF(weakSelf);
     if (_pieItems.count>1) { //大于1个pie 需要有间隙
-        [_pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull currentPie, NSUInteger idx, BOOL * _Nonnull stop) {
+        //并发添加
+        [_pieItems enumerateObjectsWithOptions:NSEnumerationConcurrent usingBlock:^(KLTPieItem * _Nonnull currentPie, NSUInteger idx, BOOL * _Nonnull stop) {
             if (currentPie.value != 0) {
                 CAShapeLayer *pieLayer = [weakSelf newPieLayerWithRadius:_radius
                                                                    width:_pieWidth
                                                                fillColor:currentPie.pieColor
                                                          startPercentage:currentPie.startPercentage+pieSpace
                                                            endPercentage:currentPie.endPercentage-pieSpace];
-                [_pieLayers addObject: pieLayer];
+                [[weakSelf pieLayers] addObject: pieLayer];
             }
         }];
     }else if(_pieItems.count == 1){ //只有1个pie 不需要有间隙
@@ -137,7 +138,7 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
     [self.layer addSublayer:self.bgLayer];
     
     //添加pieLayers 到当前layer
-    [_pieLayers enumerateObjectsUsingBlock:^(CAShapeLayer * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    [[weakSelf pieLayers] enumerateObjectsUsingBlock:^(CAShapeLayer * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [weakSelf.pieContainerLayer addSublayer:obj];
     }];
     
