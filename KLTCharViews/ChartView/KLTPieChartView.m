@@ -343,19 +343,32 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
     if (havValuePies.count==0) {
         return;
     }
-    double remainPer = maxPer - minPieSpace*havValuePies.count;
-    double rate = remainPer / (sum - minV*havValuePies.count);
-    
-    for (NSUInteger i=0; i<havValuePies.count; i++) {
-        KLTPieItem *currentPie = havValuePies[i];
-        currentPie.percentage = rate * (currentPie.value - minV) + minPieSpace;
-        currentPie.startPercentage = i>0?havValuePies[i-1].endPercentage:0.0;
-        currentPie.endPercentage = currentPie.startPercentage + currentPie.percentage;
+    if (havValuePies.count == 1) {
+        KLTPieItem *currentPie = havValuePies[0];
+        currentPie.percentage = 1.0;
+        currentPie.startPercentage = 0.0;
+        currentPie.endPercentage = 1.0;
         currentPie.midPrecentage = (currentPie.endPercentage + currentPie.startPercentage)/2; //获取当前pie的中位百分比
         currentPie.showText = YES;
         if (ABS(currentPie.midPrecentage - 0.25) <= 0.05) {         //不让其出现顶部垂直现象
             _offsetAngular -=  M_PI_4*0.30;
         }
+    }else{
+        double remainPer = maxPer - minPieSpace*havValuePies.count;
+        double rate = remainPer / (sum - minV*havValuePies.count);
+        
+        for (NSUInteger i=0; i<havValuePies.count; i++) {
+            KLTPieItem *currentPie = havValuePies[i];
+            currentPie.percentage = rate * (currentPie.value - minV) + minPieSpace;
+            currentPie.startPercentage = i>0?havValuePies[i-1].endPercentage:0.0;
+            currentPie.endPercentage = currentPie.startPercentage + currentPie.percentage;
+            currentPie.midPrecentage = (currentPie.endPercentage + currentPie.startPercentage)/2; //获取当前pie的中位百分比
+            currentPie.showText = YES;
+            if (ABS(currentPie.midPrecentage - 0.25) <= 0.05) {         //不让其出现顶部垂直现象
+                _offsetAngular -=  M_PI_4*0.30;
+            }
+        }
+
     }
     _pieItems = [havValuePies copy];
 }
