@@ -355,11 +355,11 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
         }
     }else{
         double remainPer = maxPer - minPieSpace*havValuePies.count;
-        double rate = remainPer / (sum - minV*havValuePies.count);
+        double rate = remainPer / sum;
         
         for (NSUInteger i=0; i<havValuePies.count; i++) {
             KLTPieItem *currentPie = havValuePies[i];
-            currentPie.percentage = rate * (currentPie.value - minV) + minPieSpace;
+            currentPie.percentage = rate * currentPie.value + minPieSpace;
             currentPie.startPercentage = i>0?havValuePies[i-1].endPercentage:0.0;
             currentPie.endPercentage = currentPie.startPercentage + currentPie.percentage;
             currentPie.midPrecentage = (currentPie.endPercentage + currentPie.startPercentage)/2; //获取当前pie的中位百分比
