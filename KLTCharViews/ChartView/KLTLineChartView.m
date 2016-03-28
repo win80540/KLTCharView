@@ -341,6 +341,7 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     {
         if ([self.delegate respondsToSelector:@selector(colorForVerticalSeparateLineOfIndex:)]){
             //实现了颜色回调时进入该流程，严重影响性能
+            BOOL respondsToPath = [self.delegate respondsToSelector:@selector(customVerticalSeparateLinePath:styleOfIndex:)];
             for (NSUInteger i = 0; i<_numberOfVerticalLines; i++) {
                 UIBezierPath * path = [UIBezierPath bezierPath];
                 [path moveToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y)];
@@ -348,24 +349,41 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
                 path.lineWidth = widthOfBGLine / scale / 2;
                 UIColor *color = [self.delegate colorForVerticalSeparateLineOfIndex:i];
                 CGContextSetStrokeColorWithColor(context, color.CGColor);
+                if (respondsToPath) {
+                    [self.delegate customVerticalSeparateLinePath:path styleOfIndex:i];
+                }
                 [path stroke];
             }
         }else if(![_colorOfVerticalLines isEqual:[UIColor clearColor]]){
             //未实现颜色回调并且不为无色时进入
-            CGContextSetStrokeColorWithColor(context, _colorOfVerticalLines.CGColor);
-            UIBezierPath * path = [UIBezierPath bezierPath];
-            for (NSUInteger i = 0; i<_numberOfVerticalLines; i++) {
-                [path moveToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y)];
-                [path addLineToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y-_chartHeight)];
+            if ([self.delegate respondsToSelector:@selector(customVerticalSeparateLinePath:styleOfIndex:)]) {
+                //实现了路径回调时进入该流程，严重影响性能
+                for (NSUInteger i = 0; i<_numberOfVerticalLines; i++) {
+                    UIBezierPath * path = [UIBezierPath bezierPath];
+                    [path moveToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y)];
+                    [path addLineToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y-_chartHeight)];
+                    path.lineWidth = widthOfBGLine / scale / 2;
+                    CGContextSetStrokeColorWithColor(context, _colorOfVerticalLines.CGColor);
+                    [self.delegate customVerticalSeparateLinePath:path styleOfIndex:i];
+                    [path stroke];
+                }
+            }else{
+                CGContextSetStrokeColorWithColor(context, _colorOfVerticalLines.CGColor);
+                UIBezierPath * path = [UIBezierPath bezierPath];
+                for (NSUInteger i = 0; i<_numberOfVerticalLines; i++) {
+                    [path moveToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y)];
+                    [path addLineToPoint:CGPointMake(_originP.x + horizontalSpace * i, _originP.y-_chartHeight)];
+                }
+                path.lineWidth = widthOfBGLine / scale / 2;
+                [path stroke];
             }
-            path.lineWidth = widthOfBGLine / scale / 2;
-            [path stroke];
         }
     }
     //画出背景横线
     {
         if ([self.delegate respondsToSelector:@selector(colorForHorizontalSeparateLineOfIndex:)]) {
             //实现了颜色回调时进入该流程，严重影响性能
+            BOOL respondsToPath = [self.delegate respondsToSelector:@selector(customHorizontalSeparateLinePath:styleOfIndex:)];
             for (NSUInteger i = 0; i<_numberOfHorizontalLines; i++) {
                 UIBezierPath * path = [UIBezierPath bezierPath];
                 [path moveToPoint:CGPointMake(_originP.x , _originP.y - verticalSpace * i)];
@@ -373,18 +391,34 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
                 path.lineWidth = widthOfBGLine / scale / 2;
                 UIColor *color = [self.delegate colorForHorizontalSeparateLineOfIndex:i];
                 CGContextSetStrokeColorWithColor(context, color.CGColor);
+                if (respondsToPath) {
+                    [self.delegate customHorizontalSeparateLinePath:path styleOfIndex:i];
+                }
                 [path stroke];
             }
         }else if(![_colorOfHorizontalLines isEqual:[UIColor clearColor]]){
             //未实现颜色回调并且不为无色时进入
-            CGContextSetStrokeColorWithColor(context, _colorOfHorizontalLines.CGColor);
-            UIBezierPath * path = [UIBezierPath bezierPath];
-            for (NSUInteger i = 0; i<_numberOfHorizontalLines; i++) {
-                [path moveToPoint:CGPointMake(_originP.x , _originP.y - verticalSpace * i)];
-                [path addLineToPoint:CGPointMake(_originP.x + _chartWidth, _originP.y - verticalSpace * i)];
+            if ([self.delegate respondsToSelector:@selector(customHorizontalSeparateLinePath:styleOfIndex:)]) {
+                //实现了路径回调时进入该流程，严重影响性能
+                for (NSUInteger i = 0; i<_numberOfHorizontalLines; i++) {
+                    UIBezierPath * path = [UIBezierPath bezierPath];
+                    [path moveToPoint:CGPointMake(_originP.x , _originP.y - verticalSpace * i)];
+                    [path addLineToPoint:CGPointMake(_originP.x + _chartWidth, _originP.y - verticalSpace * i)];
+                    path.lineWidth = widthOfBGLine / scale / 2;
+                    CGContextSetStrokeColorWithColor(context, _colorOfHorizontalLines.CGColor);
+                    [self.delegate customHorizontalSeparateLinePath:path styleOfIndex:i];
+                    [path stroke];
+                }
+            }else{
+                CGContextSetStrokeColorWithColor(context, _colorOfHorizontalLines.CGColor);
+                UIBezierPath * path = [UIBezierPath bezierPath];
+                for (NSUInteger i = 0; i<_numberOfHorizontalLines; i++) {
+                    [path moveToPoint:CGPointMake(_originP.x , _originP.y - verticalSpace * i)];
+                    [path addLineToPoint:CGPointMake(_originP.x + _chartWidth, _originP.y - verticalSpace * i)];
+                }
+                path.lineWidth = widthOfBGLine / scale / 2;
+                [path stroke];
             }
-            path.lineWidth = widthOfBGLine / scale / 2;
-            [path stroke];
         }
     }
     //写出X轴单位

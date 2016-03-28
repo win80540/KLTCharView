@@ -19,6 +19,14 @@
 - (CGSize)titleOffsetOfVerticalIndex:(NSUInteger)idx;
 - (UIColor *)colorForHorizontalSeparateLineOfIndex:(NSUInteger)idx;
 - (UIColor *)colorForVerticalSeparateLineOfIndex:(NSUInteger)idx;
+/*
+ @brief 定制背景横线的path代理（如虚线样式，线宽）
+ */
+- (void)customHorizontalSeparateLinePath:(UIBezierPath *)path styleOfIndex:(NSUInteger)idx;
+/*
+ @brief 定制背景竖线的path代理（如虚线样式，线宽）
+ */
+- (void)customVerticalSeparateLinePath:(UIBezierPath *)path styleOfIndex:(NSUInteger)idx;
 @end
 
 @interface KLTLineChartPoint : NSObject
@@ -52,10 +60,12 @@
 
 /*
  @brief 横向网格线的颜色
+ @discussion 如果实现了 colorForHorizontalSeparateLineOfIndex: 代理方法，该值无效
  */
 @property (strong,nonatomic) UIColor *colorOfHorizontalLines;
 /*
  @brief 纵向网格线的颜色
+ @discussion 如果实现了 colorForVerticalSeparateLineOfIndex: 代理方法，该值无效
  */
 @property (strong,nonatomic) UIColor *colorOfVerticalLines;
 
