@@ -8,6 +8,11 @@
 
 #import <UIKit/UIKit.h>
 
+#ifndef KLTLineChartView_h
+#define KLTLineChartView_h
+#define SafeFloat(x) (isnan((x))?1:(x))
+#endif
+
 @protocol KLTLineChartDataSource <NSObject>
 @optional
 - (NSString *)titleOfHorizontalIndex:(NSUInteger)idx withValue:(double)value;
