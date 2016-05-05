@@ -8,6 +8,11 @@
 
 #import <UIKit/UIKit.h>
 
+#ifndef KLTChartView_h
+#define KLTChartView_h
+#define SafeFloat(x) (isnan((x))?1:(x))
+#endif
+
 #pragma mark - KLTPieItem
 @interface KLTPieItem : NSObject
 @property (strong , nonatomic) UIColor * pieColor;

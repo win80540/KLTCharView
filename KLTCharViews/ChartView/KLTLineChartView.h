@@ -8,8 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
-#ifndef KLTLineChartView_h
-#define KLTLineChartView_h
+#ifndef KLTChartView_h
+#define KLTChartView_h
 #define SafeFloat(x) (isnan((x))?1:(x))
 #endif
 
