@@ -288,12 +288,12 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
                           endPercentage:(CGFloat)endPercentage
 {
     CAShapeLayer *pie = [CAShapeLayer layer];
-    CGPoint center = CGPointMake(SafeFloat(CGRectGetMidX(self.bounds)), SafeFloat(CGRectGetMidY(self.bounds)));
+    CGPoint center = CGPointMake(SAFEFLOAT(CGRectGetMidX(self.bounds)), SAFEFLOAT(CGRectGetMidY(self.bounds)));
     
     UIBezierPath *bPath = [UIBezierPath bezierPathWithArcCenter:center
-                                                         radius:SafeFloat(radius - width/2.0)
-                                                     startAngle:SafeFloat(-M_PI + M_PI * 2 * _startAnglePercent + M_PI * 2 * startPercentage + _offsetAngular)
-                                                       endAngle:SafeFloat(-M_PI + M_PI * 2 * _startAnglePercent + M_PI * 2 * endPercentage + _offsetAngular)
+                                                         radius:SAFEFLOAT(radius - width/2.0)
+                                                     startAngle:SAFEFLOAT(-M_PI + M_PI * 2 * _startAnglePercent + M_PI * 2 * startPercentage + _offsetAngular)
+                                                       endAngle:SAFEFLOAT(-M_PI + M_PI * 2 * _startAnglePercent + M_PI * 2 * endPercentage + _offsetAngular)
                                                      clockwise:YES];
 
     pie.fillColor = [UIColor clearColor].CGColor;
@@ -321,11 +321,11 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
     __block double sum = 0;
     if (sum == 0){
         [pieItems enumerateObjectsUsingBlock:^(KLTPieItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            sum += SafeFloat([obj value]);
+            sum += SAFEFLOAT([obj value]);
         }];
     }
     if (_value_100 > 0) {
-        maxPer = sum / SafeFloat(_value_100);
+        maxPer = sum / SAFEFLOAT(_value_100);
     }
     
     double minV = DBL_MAX;
@@ -335,8 +335,8 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
         //取最小值
         KLTPieItem *currentPie = pieItems[i];
         if (currentPie.value > 0) {
-            minV = SafeFloat(MIN(minV, currentPie.value));
-            maxV = SafeFloat(MAX(maxV, currentPie.value));
+            minV = SAFEFLOAT(MIN(minV, currentPie.value));
+            maxV = SAFEFLOAT(MAX(maxV, currentPie.value));
             [havValuePies addObject:currentPie];
         }
     }
@@ -348,10 +348,10 @@ static const CGFloat minPieSpace = 0.008; //最小pie 比重小于该值会自�
     
     for (NSUInteger i=0; i<havValuePies.count; i++) {
         KLTPieItem *currentPie = havValuePies[i];
-        currentPie.percentage = SafeFloat(rate * currentPie.value + minPieSpace);
-        currentPie.startPercentage = SafeFloat(i>0?havValuePies[i-1].endPercentage:0.0);
-        currentPie.endPercentage = SafeFloat(currentPie.startPercentage + currentPie.percentage);
-        currentPie.midPrecentage = SafeFloat((currentPie.endPercentage + currentPie.startPercentage)/2); //获取当前pie的中位百分比
+        currentPie.percentage = SAFEFLOAT(rate * currentPie.value + minPieSpace);
+        currentPie.startPercentage = SAFEFLOAT(i>0?havValuePies[i-1].endPercentage:0.0);
+        currentPie.endPercentage = SAFEFLOAT(currentPie.startPercentage + currentPie.percentage);
+        currentPie.midPrecentage = SAFEFLOAT((currentPie.endPercentage + currentPie.startPercentage)/2); //获取当前pie的中位百分比
         currentPie.showText = YES;
         if (ABS(currentPie.midPrecentage - 0.25) <= 0.05) {         //不让其出现顶部垂直现象
             _offsetAngular -=  M_PI_4*0.30;

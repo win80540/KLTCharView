@@ -85,9 +85,9 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     //画填充色
     KLTLineChartPoint *startP =  [_line.points objectAtIndex:0];
     KLTLineChartPoint *endP = [_line.points lastObject];
-    [_path addLineToPoint:CGPointMake(SafeFloat(endP.x), SafeFloat(_originP.y))];
-    [_path addLineToPoint:CGPointMake(SafeFloat(startP.x), SafeFloat(_originP.y))];
-    [_path addLineToPoint:CGPointMake(SafeFloat(startP.x), SafeFloat(startP.y))];
+    [_path addLineToPoint:CGPointMake(SAFEFLOAT(endP.x), SAFEFLOAT(_originP.y))];
+    [_path addLineToPoint:CGPointMake(SAFEFLOAT(startP.x), SAFEFLOAT(_originP.y))];
+    [_path addLineToPoint:CGPointMake(SAFEFLOAT(startP.x), SAFEFLOAT(startP.y))];
     [_path fill];
 }
 @end
@@ -103,9 +103,9 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     UIBezierPath *path = [UIBezierPath bezierPath];
     [_line.points enumerateObjectsUsingBlock:^(KLTLineChartPoint * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (idx == 0) {
-            [path moveToPoint:CGPointMake(SafeFloat(obj.x), SafeFloat(obj.y))];
+            [path moveToPoint:CGPointMake(SAFEFLOAT(obj.x), SAFEFLOAT(obj.y))];
         }else{
-            [path addLineToPoint:CGPointMake(SafeFloat(obj.x), SafeFloat(obj.y))];
+            [path addLineToPoint:CGPointMake(SAFEFLOAT(obj.x), SAFEFLOAT(obj.y))];
         }
     }];
     
@@ -191,15 +191,15 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 - (void)displayWithAnimation:(BOOL)isAnimation{
     [self setNeedsDisplay];
     
-    _chartWidth = SafeFloat(self.bounds.size.width - verticalTitleSpace-horizontalPadding*2);
-    _chartHeight = SafeFloat(self.bounds.size.height - (horizontalTitleSpace+verticalPadding)*2);
-    _originP = CGPointMake(SafeFloat(verticalTitleSpace+horizontalPadding), SafeFloat(_chartHeight+verticalPadding+horizontalTitleSpace));
+    _chartWidth = SAFEFLOAT(self.bounds.size.width - verticalTitleSpace-horizontalPadding*2);
+    _chartHeight = SAFEFLOAT(self.bounds.size.height - (horizontalTitleSpace+verticalPadding)*2);
+    _originP = CGPointMake(SAFEFLOAT(verticalTitleSpace+horizontalPadding), SAFEFLOAT(_chartHeight+verticalPadding+horizontalTitleSpace));
     
     WEAK_SELF(weakSelf);
     //清理view
     [_containerView removeFromSuperview];
     //重新生产contanerView
-    _containerView = [[UIView alloc] initWithFrame:CGRectMake(_originP.x, SafeFloat(verticalPadding+horizontalTitleSpace), _chartWidth, _chartHeight)];
+    _containerView = [[UIView alloc] initWithFrame:CGRectMake(_originP.x, SAFEFLOAT(verticalPadding+horizontalTitleSpace), _chartWidth, _chartHeight)];
     [_containerView setBackgroundColor:[UIColor clearColor]];
     [self addSubview:_containerView];
     
@@ -255,8 +255,8 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 
 - (void)rangeChanged{
     //计算横纵单元格的值
-    _valueOfPreHorizontalGird = SafeFloat((_maxValueOfHorizontal - _minValueOfHorizontal) / (_numberOfVerticalLines-1));
-    _valueOfPreVerticalGird = SafeFloat((_maxValueOfVertical - _minValueOfVertical) / (_numberOfHorizontalLines-1));
+    _valueOfPreHorizontalGird = SAFEFLOAT((_maxValueOfHorizontal - _minValueOfHorizontal) / (_numberOfVerticalLines-1));
+    _valueOfPreVerticalGird = SAFEFLOAT((_maxValueOfVertical - _minValueOfVertical) / (_numberOfHorizontalLines-1));
 }
 
 //自动计算图表y的范围
@@ -273,10 +273,19 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
             }
         }];
     }];
-    double rangeV = SafeFloat(maxV - minV);
+    
+    if (maxV == minV) {
+        minV = maxV - ABS(maxV);
+    }
+    
+    double rangeV = SAFEFLOAT(maxV - minV);
     //修改刻度范围
-    _maxValueOfVertical = maxV+SafeFloat(autoComputeVRangeMAXRate)*rangeV;
-    _minValueOfVertical = minV-SafeFloat(autoComputeVRangeMINRate)*rangeV;
+    _maxValueOfVertical = maxV+SAFEFLOAT(autoComputeVRangeMAXRate)*rangeV;
+    if (minV >= 0) {
+        _minValueOfVertical = 0;
+    }else{
+        _minValueOfVertical = minV-SAFEFLOAT(autoComputeVRangeMINRate)*rangeV;
+    }
     [self rangeChanged];
 }
 //自动计算图表x的范围
@@ -293,25 +302,34 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
            }
        }];
     }];
-    double rangeH = SafeFloat(maxH - minH);
+    
+    if (maxH == minH) {
+        minH = maxH - ABS(maxH);
+    }
+    
+    double rangeH = SAFEFLOAT(maxH - minH);
     //修改刻度范围
-    _maxValueOfHorizontal = maxH+SafeFloat(autoComputeHRangeMAXRate)*rangeH;
-    _minValueOfHorizontal = minH-SafeFloat(autoComputeHRangeMINRate)*rangeH;
+    _maxValueOfHorizontal = maxH+SAFEFLOAT(autoComputeHRangeMAXRate)*rangeH;
+    if (minH>=0) {
+        minH = 0;
+    }else{
+        _minValueOfHorizontal = minH-SAFEFLOAT(autoComputeHRangeMINRate)*rangeH;
+    }
     [self rangeChanged];
 }
 
 - (KLTLineChartLineView *)createLineView:(KLTLineChartLine *)line{
     //屏幕的点与值的比例
-    CGFloat xRate = SafeFloat((_maxValueOfHorizontal - _minValueOfHorizontal)/SafeFloat(_chartWidth));
-    CGFloat yRate = SafeFloat((_maxValueOfVertical - _minValueOfVertical)/SafeFloat(_chartHeight));
+    CGFloat xRate = SAFEFLOAT((_maxValueOfHorizontal - _minValueOfHorizontal)/SAFEFLOAT(_chartWidth));
+    CGFloat yRate = SAFEFLOAT((_maxValueOfVertical - _minValueOfVertical)/SAFEFLOAT(_chartHeight));
     //按比例计算出UI坐标点
     [line.points enumerateObjectsUsingBlock:^(KLTLineChartPoint * _Nonnull point, NSUInteger idx, BOOL * _Nonnull stop) {
-        point.x = (point.valueOfHorizontal - _minValueOfHorizontal) / xRate;
-        point.y = _chartHeight - (point.valueOfVertical - _minValueOfVertical) / yRate ;
+        point.x = SAFEFLOAT((point.valueOfHorizontal - _minValueOfHorizontal) / xRate);
+        point.y = SAFEFLOAT(_chartHeight - (point.valueOfVertical - _minValueOfVertical) / yRate);
     }];
     //添加折线图
-    KLTLineChartLineView *lineView = [[KLTLineChartLineView alloc] initWithFrame:CGRectMake(0, 0, SafeFloat(_chartWidth), SafeFloat(_chartHeight))];
-    lineView.originP = CGPointMake(0, SafeFloat(_chartHeight));
+    KLTLineChartLineView *lineView = [[KLTLineChartLineView alloc] initWithFrame:CGRectMake(0, 0, SAFEFLOAT(_chartWidth), SAFEFLOAT(_chartHeight))];
+    lineView.originP = CGPointMake(0, SAFEFLOAT(_chartHeight));
     lineView.line = line;
     [lineView buildUI];
     return lineView;
@@ -324,16 +342,16 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     static CGFloat scale = 2.0;
     static dispatch_once_t t;
     dispatch_once(&t, ^{
-        scale = SafeFloat([UIScreen mainScreen].scale);
+        scale = SAFEFLOAT([UIScreen mainScreen].scale);
     });
     //计算图像高宽
-    _chartWidth = SafeFloat(rect.size.width - verticalTitleSpace-horizontalPadding*2);
-    _chartHeight = SafeFloat(rect.size.height - (horizontalTitleSpace+verticalPadding)*2);
+    _chartWidth = SAFEFLOAT(rect.size.width - verticalTitleSpace-horizontalPadding*2);
+    _chartHeight = SAFEFLOAT(rect.size.height - (horizontalTitleSpace+verticalPadding)*2);
     //计算图表原点坐标
-    _originP = CGPointMake(SafeFloat(verticalTitleSpace+horizontalPadding), SafeFloat(_chartHeight+verticalPadding+horizontalTitleSpace));
+    _originP = CGPointMake(SAFEFLOAT(verticalTitleSpace+horizontalPadding), SAFEFLOAT(_chartHeight+verticalPadding+horizontalTitleSpace));
     //计算横纵单元格距离
-    CGFloat horizontalSpace = SafeFloat(_chartWidth / (_numberOfVerticalLines-1));
-    CGFloat verticalSpace = SafeFloat(_chartHeight / (_numberOfHorizontalLines-1));
+    CGFloat horizontalSpace = SAFEFLOAT(_chartWidth / (_numberOfVerticalLines-1));
+    CGFloat verticalSpace = SAFEFLOAT(_chartHeight / (_numberOfHorizontalLines-1));
     
     CGContextRef context = UIGraphicsGetCurrentContext();
     
