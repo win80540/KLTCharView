@@ -10,7 +10,7 @@
 #import "KLTColumnChartView.h"
 #import "KLTLineChartView.h"
 #import "KLTPieChartView.h"
-@interface ViewController ()<KLTLineChartDataSource,KLTLineChartDelegate>
+@interface ViewController ()<KLTLineChartDataSource,KLTLineChartDelegate,KLTLineChartTipViewDelegate>
 {
     
 }
@@ -105,6 +105,7 @@
     [lineChartView setColorOfHorizontalLines:[UIColor colorWithWhite:0.7 alpha:0.5]];
     lineChartView.dataSource = self;
     lineChartView.delegate = self;
+    lineChartView.delegateOfTipView = self;
     
     NSMutableArray *lines = [@[] mutableCopy];
     {
@@ -117,10 +118,20 @@
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:7 vertical:3]];
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:14 vertical:50]];
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:20 vertical:20]];
+        {
+            KLTLineChartPoint *point = [points lastObject];
+            point.identity = @"卖入";
+            point.context = @"阿斯顿发舒服";
+        }
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:25 vertical:10]];
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:30 vertical:-30]];
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:60 vertical:56]];
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:70 vertical:56]];
+        {
+            KLTLineChartPoint *point = [points lastObject];
+            point.identity = @"卖出";
+            point.context = @"阿斯顿发舒服";
+        }
         line.points = points;
         [lines addObject:line];
     }
@@ -215,6 +226,16 @@
         return [UIColor redColor];
     }
     return [UIColor clearColor];
+}
+- (UIView *)lineChartView:(KLTLineChartView *)chartView tipViewOfPoint:(KLTLineChartPoint *)point inLine:(KLTLineChartLine *)line avilibleRect:(CGRect)rect{
+    if (point.context) {
+        UIView *view = [[UIView alloc] init];
+        view.center = CGPointMake(point.x, point.y);
+        view.bounds = CGRectMake(0, 0, 5, 5);
+        view.backgroundColor = [UIColor redColor];
+        return view;
+    }
+    return nil;
 }
 #pragma mark Getter Setter
 - (UIScrollView *)scrollView{

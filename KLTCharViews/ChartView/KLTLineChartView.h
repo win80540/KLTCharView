@@ -32,16 +32,21 @@
  @brief 定制背景竖线的path代理（如虚线样式，线宽）
  */
 - (void)customVerticalSeparateLinePath:(UIBezierPath *)path styleOfIndex:(NSUInteger)idx;
+
 @end
 
 @interface KLTLineChartPoint : NSObject
+
 @property (assign, nonatomic) double valueOfHorizontal;
 @property (assign, nonatomic) double valueOfVertical;
+
 + (instancetype)pointWithHorizontalValue:(double)valueOfHorizontal verticalValue:(double)valueOfVertical;
 - (instancetype)initWithValueOfHorizontal:(double)valueOfHorizontal vertical:(double)valueOfVertical;
+
 @end
 
 @interface KLTLineChartLine : NSObject
+@property (strong, nonatomic) NSString *identity;
 @property (strong, nonatomic) UIColor *lineColor;
 @property (strong, nonatomic) UIColor *fillColor;
 @property (strong, nonatomic) NSMutableArray<KLTLineChartPoint *> *points;
@@ -107,3 +112,46 @@
 
 - (void)displayWithAnimation:(BOOL)isAnimation;
 @end
+
+#pragma mark - tip category
+
+@protocol KLTLineChartTipViewDelegate<NSObject>
+@optional
+/**
+ *  @brief 询问delegate需要显示的tipView
+ *
+ *  @param chartView 当前的lineChartView
+ *  @param point     当前的询问的点的实例
+ *  @param line      当前的询问的线的实例
+ *  @param aRect     可见的范围CGRect结构
+ *
+ *  @discussion      应该根据参数中point.x,point.y和aRect来确定view的位置
+ *
+ *  @return 类型UIView *,tipView会添加到KLTLineChartView
+ */
+- (UIView *)lineChartView:(KLTLineChartView *)chartView tipViewOfPoint:(KLTLineChartPoint *)currentPoint inLine:(KLTLineChartLine *)currentLine avilibleRect:(CGRect)aRect;
+
+@end
+
+/**
+ *  @brief 需要显示点的对应信息的Category
+ */
+@interface KLTLineChartPoint (KLTTipInfo)
+
+@property (strong, nonatomic) NSString *identity;
+/**
+ *  @brief 需要携带的上下文，为生成TipView提供携带的信息
+ */
+@property (strong, nonatomic) id context;
+
+@property (assign, nonatomic, readonly) CGFloat x;
+@property (assign, nonatomic, readonly) CGFloat y;
+
+@end
+
+@interface KLTLineChartView (KLTTipInfo)
+
+@property (weak,nonatomic)  id<KLTLineChartTipViewDelegate> delegateOfTipView;
+
+@end
+

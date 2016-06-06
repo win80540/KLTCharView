@@ -6,7 +6,18 @@
 //  Copyright © 2015年 Netease. All rights reserved.
 //
 
+#import <objc/message.h>
 #import "KLTLineChartView.h"
+
+#define ONMain(codeBlock) \
+                        if ([[NSThread currentThread] isMainThread]) {\
+                            ({codeBlock});\
+                        }else{\
+                            dispatch_sync(dispatch_get_main_queue(), ^{\
+                               ({codeBlock}); \
+                            });\
+                        }\
+
 
 static const CGFloat horizontalTitleSpace = 21; //x轴标题的默认高度
 static const CGFloat verticalTitleSpace = 50; //y轴标题的默认宽度
@@ -23,14 +34,21 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 
 #pragma mark Private Class
 @interface KLTLineChartLineBGView : UIView
+
 @property (strong,nonatomic) KLTLineChartLine *line;
 @property (assign,nonatomic) CGPoint originP;
 @property (copy,nonatomic) UIBezierPath *path;
+
 @end
+
 @interface KLTLineChartLineView : UIView
+
+@property (weak, nonatomic) KLTLineChartView *parentView;
 @property (strong,nonatomic) KLTLineChartLine *line;
 @property (assign,nonatomic) CGPoint originP;
 @property (strong,nonatomic) KLTLineChartLineBGView *bgView;
+@property (strong,nonatomic) NSMutableSet *tipViewSet;
+
 - (void)buildUI;
 @end
 #pragma mark Public Class
@@ -100,6 +118,12 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     return self;
 }
 - (void)buildUI{
+    ONMain(
+           for (UIView * tipView in _tipViewSet) {
+               [tipView removeFromSuperview];
+           }
+           );
+    
     UIBezierPath *path = [UIBezierPath bezierPath];
     [_line.points enumerateObjectsUsingBlock:^(KLTLineChartPoint * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (idx == 0) {
@@ -116,7 +140,9 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
         _bgView.line = self.line;
         _bgView.originP = self.originP;
         _bgView.path = path;
-        [self addSubview:_bgView];
+        ONMain(
+               [self addSubview:_bgView];
+               );
     }
     
     //画出折线
@@ -126,6 +152,24 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     lineShaperLayer.strokeColor = self.line.lineColor.CGColor;
     lineShaperLayer.fillColor = [UIColor clearColor].CGColor;
     [self.layer addSublayer:lineShaperLayer];
+    
+    NSMutableSet<UIView *> *set = [NSMutableSet set];
+    if ([_parentView.delegateOfTipView respondsToSelector:@selector(lineChartView:tipViewOfPoint:inLine:avilibleRect:)]){
+        CGRect avRect = self.bounds;
+        [_line.points enumerateObjectsWithOptions:NSEnumerationConcurrent usingBlock:^(KLTLineChartPoint * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            UIView * tipView = [_parentView.delegateOfTipView lineChartView:_parentView tipViewOfPoint:obj inLine:_line avilibleRect:avRect];
+            if (tipView && [tipView isKindOfClass:[UIView class]]) {
+                tipView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin;
+                [set addObject:tipView];
+            }
+        }];
+    }
+    ONMain(
+           for (UIView * tipView in set) {
+               [self addSubview:tipView];
+           }
+           );
+    _tipViewSet = set;
 }
 
 @end
@@ -146,7 +190,6 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 }
 
 @end
-
 
 @implementation KLTLineChartLine
 - (UIColor *)lineColor{
@@ -190,43 +233,44 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 
 - (void)displayWithAnimation:(BOOL)isAnimation{
     [self setNeedsDisplay];
-    
-    _chartWidth = SAFEFLOAT(self.bounds.size.width - verticalTitleSpace-horizontalPadding*2);
-    _chartHeight = SAFEFLOAT(self.bounds.size.height - (horizontalTitleSpace+verticalPadding)*2);
-    _originP = CGPointMake(SAFEFLOAT(verticalTitleSpace+horizontalPadding), SAFEFLOAT(_chartHeight+verticalPadding+horizontalTitleSpace));
-    
-    WEAK_SELF(weakSelf);
-    //清理view
-    [_containerView removeFromSuperview];
-    //重新生产contanerView
-    _containerView = [[UIView alloc] initWithFrame:CGRectMake(_originP.x, SAFEFLOAT(verticalPadding+horizontalTitleSpace), _chartWidth, _chartHeight)];
-    [_containerView setBackgroundColor:[UIColor clearColor]];
-    [self addSubview:_containerView];
-    
-    //画出每一条线
-    [self.lines enumerateObjectsUsingBlock:^(KLTLineChartLine * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-       [_containerView addSubview:[weakSelf createLineView:obj]];
-    }];
-
-    if (isAnimation) {
-        //动画
-        CAShapeLayer *makeLayer = [CAShapeLayer layer];
-        makeLayer.lineWidth = _chartHeight;
-        makeLayer.strokeColor = [UIColor blackColor].CGColor;
-        UIBezierPath *path = [UIBezierPath bezierPath];
-        [path moveToPoint:CGPointMake(0, _chartHeight/2.0)];
-        [path addLineToPoint:CGPointMake(_chartWidth, _chartHeight/2.0)];
-        makeLayer.path = path.CGPath;
-        _containerView.layer.mask = makeLayer;
+    ONMain(
+        _chartWidth = SAFEFLOAT(self.bounds.size.width - verticalTitleSpace-horizontalPadding*2);
+        _chartHeight = SAFEFLOAT(self.bounds.size.height - (horizontalTitleSpace+verticalPadding)*2);
+        _originP = CGPointMake(SAFEFLOAT(verticalTitleSpace+horizontalPadding), SAFEFLOAT(_chartHeight+verticalPadding+horizontalTitleSpace));
         
-        CABasicAnimation *maskAnim = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
-        maskAnim.fromValue = @(0);
-        maskAnim.toValue = @(1);
-        maskAnim.duration = 2;
-        maskAnim.removedOnCompletion = YES;
-        maskAnim.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
-        [makeLayer addAnimation:maskAnim forKey:@"maskLayerAnimation"];
-    }
+        WEAK_SELF(weakSelf);
+        //清理view
+        [_containerView removeFromSuperview];
+        //重新生产contanerView
+        _containerView = [[UIView alloc] initWithFrame:CGRectMake(_originP.x, SAFEFLOAT(verticalPadding+horizontalTitleSpace), _chartWidth, _chartHeight)];
+        [_containerView setBackgroundColor:[UIColor clearColor]];
+        [self addSubview:_containerView];
+        
+        //画出每一条线
+        [self.lines enumerateObjectsUsingBlock:^(KLTLineChartLine * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+           [_containerView addSubview:[weakSelf createLineView:obj]];
+        }];
+
+        if (isAnimation) {
+            //动画
+            CAShapeLayer *makeLayer = [CAShapeLayer layer];
+            makeLayer.lineWidth = _chartHeight;
+            makeLayer.strokeColor = [UIColor blackColor].CGColor;
+            UIBezierPath *path = [UIBezierPath bezierPath];
+            [path moveToPoint:CGPointMake(0, _chartHeight/2.0)];
+            [path addLineToPoint:CGPointMake(_chartWidth, _chartHeight/2.0)];
+            makeLayer.path = path.CGPath;
+            _containerView.layer.mask = makeLayer;
+            
+            CABasicAnimation *maskAnim = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
+            maskAnim.fromValue = @(0);
+            maskAnim.toValue = @(1);
+            maskAnim.duration = 2;
+            maskAnim.removedOnCompletion = YES;
+            maskAnim.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+            [makeLayer addAnimation:maskAnim forKey:@"maskLayerAnimation"];
+        }
+    );
 }
 
 #pragma mark Private Method
@@ -331,6 +375,7 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     KLTLineChartLineView *lineView = [[KLTLineChartLineView alloc] initWithFrame:CGRectMake(0, 0, SAFEFLOAT(_chartWidth), SAFEFLOAT(_chartHeight))];
     lineView.originP = CGPointMake(0, SAFEFLOAT(_chartHeight));
     lineView.line = line;
+    lineView.parentView = self;
     [lineView buildUI];
     return lineView;
 }
@@ -558,4 +603,39 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 }
 @end
 
+#pragma mark - tip category
+
+static char kIdentity;
+static char kContext;
+
+@implementation KLTLineChartPoint(KLTTipInfo)
+
+- (void)setIdentity:(NSString *)identity{
+    objc_setAssociatedObject(self, &kIdentity, identity, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+- (NSString *)identity{
+    return objc_getAssociatedObject(self, &kIdentity);
+}
+
+- (void)setContext:(id)context{
+    objc_setAssociatedObject(self, &kContext, context, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+- (id)context{
+    return objc_getAssociatedObject(self, &kContext);
+}
+
+@end
+
+static char kDelegateTipView;
+
+@implementation KLTLineChartView (KLTTipInfo)
+
+- (void)setDelegateOfTipView:(id)delegateOfTipView{
+    objc_setAssociatedObject(self, &kDelegateTipView, delegateOfTipView, OBJC_ASSOCIATION_ASSIGN);
+}
+- (id)delegateOfTipView{
+    return objc_getAssociatedObject(self, &kDelegateTipView);
+}
+
+@end
 
