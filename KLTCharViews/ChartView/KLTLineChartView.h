@@ -49,7 +49,11 @@
 @property (strong, nonatomic) NSString *identity;
 @property (strong, nonatomic) UIColor *lineColor;
 @property (strong, nonatomic) UIColor *fillColor;
+@property (assign, nonatomic) CGFloat lineWidth;
 @property (strong, nonatomic) NSMutableArray<KLTLineChartPoint *> *points;
+
+- (instancetype)init NS_DESIGNATED_INITIALIZER;
+
 @end
 
 @interface KLTLineChartView : UIView
@@ -110,6 +114,7 @@
 @property (assign,nonatomic) double minValueOfVertical;
 
 
+- (instancetype)initWithFrame:(CGRect)frame NS_DESIGNATED_INITIALIZER;
 - (void)displayWithAnimation:(BOOL)isAnimation;
 @end
 

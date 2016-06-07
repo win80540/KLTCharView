@@ -125,6 +125,11 @@
         }
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:25 vertical:10]];
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:30 vertical:-30]];
+        {
+            KLTLineChartPoint *point = [points lastObject];
+            point.identity = @"卖入2";
+            point.context = @"阿斯顿发舒服";
+        }
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:60 vertical:56]];
         [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:70 vertical:56]];
         {

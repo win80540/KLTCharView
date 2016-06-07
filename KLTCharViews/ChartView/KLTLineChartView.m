@@ -11,20 +11,19 @@
 
 #define ONMain(codeBlock) \
                         if ([[NSThread currentThread] isMainThread]) {\
-                            ({codeBlock});\
+                            {codeBlock;}\
                         }else{\
-                            dispatch_sync(dispatch_get_main_queue(), ^{\
-                               ({codeBlock}); \
+                            dispatch_async(dispatch_get_main_queue(), ^{\
+                               {codeBlock;} \
                             });\
                         }\
-
 
 static const CGFloat horizontalTitleSpace = 21; //x轴标题的默认高度
 static const CGFloat verticalTitleSpace = 50; //y轴标题的默认宽度
 static const CGFloat horizontalPadding = 15;
 static const CGFloat verticalPadding = 15;
 static const CGFloat widthOfBGLine = 1; //表格的网格线宽度
-static const CGFloat widthOfLine = 1; //折线宽度
+//static const CGFloat widthOfLine = 1; //折线宽度
 static const CGFloat autoComputeVRangeMAXRate = 0.2; //顶部留空百分比
 static const CGFloat autoComputeVRangeMINRate = 0.2; //底部留空百分比
 static const CGFloat autoComputeHRangeMAXRate = 0.0; //左部留空百分比
@@ -39,9 +38,14 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 @property (assign,nonatomic) CGPoint originP;
 @property (copy,nonatomic) UIBezierPath *path;
 
+- (instancetype)initWithFrame:(CGRect)frame NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithCoder:(NSCoder *)aDecoder NS_DESIGNATED_INITIALIZER;
+
 @end
 
-@interface KLTLineChartLineView : UIView
+@interface KLTLineChartLineView : UIView{
+    dispatch_queue_t _lockQueueForTipViewSet;
+}
 
 @property (weak, nonatomic) KLTLineChartView *parentView;
 @property (strong,nonatomic) KLTLineChartLine *line;
@@ -71,15 +75,23 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 @property (strong,nonatomic) CAShapeLayer *bgLayer;
 @property (assign,nonatomic) double valueOfPreHorizontalGird;
 @property (assign,nonatomic) double valueOfPreVerticalGird;
+
+- (instancetype)initWithCoder:(NSCoder *)aDecoder NS_DESIGNATED_INITIALIZER;
 @end
 #pragma mark - Implemetation
 
 #pragma mark Private Class
 @implementation KLTLineChartLineBGView
+
 - (instancetype)initWithFrame:(CGRect)frame{
     if(self = [super initWithFrame:frame]){
         [self setBackgroundColor:[UIColor clearColor]];
     }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)aDecoder{
+    self = [super initWithCoder:aDecoder];
     return self;
 }
 - (void)layoutSubviews{
@@ -114,15 +126,19 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 - (instancetype)initWithFrame:(CGRect)frame{
     if(self = [super initWithFrame:frame]){
         [self setBackgroundColor:[UIColor clearColor]];
+        _lockQueueForTipViewSet = dispatch_queue_create("com.KLT.lineChartView.tipViewSetLockQueue", DISPATCH_QUEUE_CONCURRENT);
     }
     return self;
 }
 - (void)buildUI{
-    ONMain(
-           for (UIView * tipView in _tipViewSet) {
-               [tipView removeFromSuperview];
-           }
-           );
+    if (self.tipViewSet.count>0) {
+        ONMain(
+               for (UIView * tipView in self.tipViewSet) {
+                   [tipView removeFromSuperview];
+               }
+               );
+        [self.tipViewSet removeAllObjects];
+    }
     
     UIBezierPath *path = [UIBezierPath bezierPath];
     [_line.points enumerateObjectsUsingBlock:^(KLTLineChartPoint * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -148,30 +164,49 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     //画出折线
     CAShapeLayer *lineShaperLayer = [CAShapeLayer layer];
     lineShaperLayer.path = path.CGPath;
-    lineShaperLayer.lineWidth = widthOfLine;
+    lineShaperLayer.lineWidth = self.line.lineWidth;
     lineShaperLayer.strokeColor = self.line.lineColor.CGColor;
     lineShaperLayer.fillColor = [UIColor clearColor].CGColor;
-    [self.layer addSublayer:lineShaperLayer];
-    
-    NSMutableSet<UIView *> *set = [NSMutableSet set];
-    if ([_parentView.delegateOfTipView respondsToSelector:@selector(lineChartView:tipViewOfPoint:inLine:avilibleRect:)]){
-        CGRect avRect = self.bounds;
-        [_line.points enumerateObjectsWithOptions:NSEnumerationConcurrent usingBlock:^(KLTLineChartPoint * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            UIView * tipView = [_parentView.delegateOfTipView lineChartView:_parentView tipViewOfPoint:obj inLine:_line avilibleRect:avRect];
-            if (tipView && [tipView isKindOfClass:[UIView class]]) {
-                tipView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin;
-                [set addObject:tipView];
-            }
-        }];
-    }
     ONMain(
-           for (UIView * tipView in set) {
-               [self addSubview:tipView];
-           }
+           [self.layer addSublayer:lineShaperLayer];
            );
-    _tipViewSet = set;
+    
+    if ([_parentView.delegateOfTipView respondsToSelector:@selector(lineChartView:tipViewOfPoint:inLine:avilibleRect:)])
+        //如果响应 lineChartView:tipViewOfPoint:inLine:avilibleRect: 由于代理方法中可能会出现生成大量View的耗时代码，所以异步派发到后台线程，执行代理方法
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            CGRect avRect = self.bounds;
+            [_line.points enumerateObjectsWithOptions:NSEnumerationConcurrent usingBlock:^(KLTLineChartPoint * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                UIView * tipView = [_parentView.delegateOfTipView lineChartView:_parentView tipViewOfPoint:obj inLine:_line avilibleRect:avRect];
+                if (tipView && [tipView isKindOfClass:[UIView class]]) {
+                    tipView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin;
+                    [self addTipView:tipView];
+                }
+            }];
+            if (self.tipViewSet.count > 0) {
+                ONMain(
+                       for (UIView * tipView in self.tipViewSet) {
+                           [self addSubview:tipView];
+                       }
+                       );
+            }
+        });
 }
 
+- (void)addTipView:(UIView *)tipView{
+    dispatch_barrier_async(_lockQueueForTipViewSet, ^{
+        [_tipViewSet addObject:tipView];
+    });
+}
+- (NSMutableSet<UIView *> *)tipViewSet{
+    __block id ret = nil;
+    dispatch_sync(_lockQueueForTipViewSet, ^{
+        if (_tipViewSet == nil) {
+            _tipViewSet = [NSMutableSet set];
+        }
+        ret = _tipViewSet;
+    });
+    return ret;
+}
 @end
 #pragma mark Public Class
 
@@ -192,6 +227,18 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 @end
 
 @implementation KLTLineChartLine
+
+- (instancetype)init{
+    if (self = [super init]) {
+       [self __initSelf];
+    }
+    return self;
+}
+
+- (void)__initSelf{
+    self.lineWidth = 1;
+}
+
 - (UIColor *)lineColor{
     if (_lineColor) {
         return _lineColor;
@@ -212,21 +259,27 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 
 @implementation KLTLineChartView
 
+- (void)awakeFromNib{
+    [self __initialize];
+}
+
 - (instancetype)init{
-    if (self = [super init]) {
-        [self __initialize];
+    if (self = [self initWithFrame:CGRectZero]) {
+    
     }
     return self;
 }
+
 - (instancetype)initWithFrame:(CGRect)frame{
     if (self = [super initWithFrame:frame]) {
         [self __initialize];
     }
     return self;
 }
+
 - (instancetype)initWithCoder:(NSCoder *)aDecoder{
     if (self = [super initWithCoder:aDecoder]) {
-        [self __initialize];
+        
     }
     return self;
 }
@@ -386,9 +439,11 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     
     static CGFloat scale = 2.0;
     static dispatch_once_t t;
+    
     dispatch_once(&t, ^{
         scale = SAFEFLOAT([UIScreen mainScreen].scale);
     });
+    
     //计算图像高宽
     _chartWidth = SAFEFLOAT(rect.size.width - verticalTitleSpace-horizontalPadding*2);
     _chartHeight = SAFEFLOAT(rect.size.height - (horizontalTitleSpace+verticalPadding)*2);
