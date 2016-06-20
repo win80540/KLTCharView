@@ -359,6 +359,7 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     [self rangeChanged];
 }
 
+//自动计算图表y的范围
 - (void)rangeChanged{
     //计算横纵单元格的值
     _valueOfPreHorizontalGird = SAFEFLOAT((_maxValueOfHorizontal - _minValueOfHorizontal) / (_numberOfVerticalLines-1));
@@ -383,7 +384,9 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     if (maxV == minV) {
         minV = maxV - ABS(maxV);
     }
-    
+    if (minV >= 0) {
+        minV = 0;
+    }
     double rangeV = SAFEFLOAT(maxV - minV);
     //修改刻度范围
     _maxValueOfVertical = maxV+SAFEFLOAT(autoComputeVRangeMAXRate)*rangeV;
@@ -399,25 +402,27 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     __block double minH=DBL_MAX,maxH=DBL_MIN;
     //取得最大最小值
     [_lines enumerateObjectsUsingBlock:^(KLTLineChartLine * _Nonnull line, NSUInteger lineIdx, BOOL * _Nonnull lineStop) {
-       [line.points enumerateObjectsUsingBlock:^(KLTLineChartPoint * _Nonnull point, NSUInteger pointIdx, BOOL * _Nonnull pointStop) {
-           if(point.valueOfHorizontal >= maxH){
-               maxH = point.valueOfHorizontal;
-           }
-           if (point.valueOfHorizontal <= minH) {
-               minH = point.valueOfHorizontal;
-           }
-       }];
+        [line.points enumerateObjectsUsingBlock:^(KLTLineChartPoint * _Nonnull point, NSUInteger pointIdx, BOOL * _Nonnull pointStop) {
+            if(point.valueOfHorizontal >= maxH){
+                maxH = point.valueOfHorizontal;
+            }
+            if (point.valueOfHorizontal <= minH) {
+                minH = point.valueOfHorizontal;
+            }
+        }];
     }];
     
     if (maxH == minH) {
         minH = maxH - ABS(maxH);
     }
-    
+    if (minH>=0) {
+        minH = 0;
+    }
     double rangeH = SAFEFLOAT(maxH - minH);
     //修改刻度范围
     _maxValueOfHorizontal = maxH+SAFEFLOAT(autoComputeHRangeMAXRate)*rangeH;
     if (minH>=0) {
-        minH = 0;
+        _minValueOfHorizontal = 0;
     }else{
         _minValueOfHorizontal = minH-SAFEFLOAT(autoComputeHRangeMINRate)*rangeH;
     }
