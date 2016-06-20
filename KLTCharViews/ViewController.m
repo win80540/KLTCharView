@@ -113,25 +113,25 @@
         line.fillColor = [UIColor colorWithRed:0.5 green:0.0 blue:0.1 alpha:1];
         line.lineColor = [UIColor colorWithRed:1 green:0.0 blue:0.1 alpha:1];
         NSMutableArray *points = [@[] mutableCopy];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:0 vertical:-14]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:3 vertical:3]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:7 vertical:3]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:14 vertical:50]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:20 vertical:20]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:0 vertical:-0.014]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:3 vertical:0.003]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:7 vertical:0.003]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:14 vertical:0.0050]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:20 vertical:0.0020]];
         {
             KLTLineChartPoint *point = [points lastObject];
             point.identity = @"卖入";
             point.context = @"阿斯顿发舒服";
         }
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:25 vertical:10]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:30 vertical:-30]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:25 vertical:0.0010]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:30 vertical:-0.0030]];
         {
             KLTLineChartPoint *point = [points lastObject];
             point.identity = @"卖入2";
             point.context = @"阿斯顿发舒服";
         }
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:60 vertical:56]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:70 vertical:56]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:60 vertical:0.0056]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:70 vertical:0.0056]];
         {
             KLTLineChartPoint *point = [points lastObject];
             point.identity = @"卖出";
@@ -145,15 +145,15 @@
         line.fillColor = [UIColor clearColor];
         line.lineColor = [UIColor colorWithRed:0 green:0 blue:0.9 alpha:1];
         NSMutableArray *points = [@[] mutableCopy];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:0 vertical:-18]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:3 vertical:38]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:7 vertical:2]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:14 vertical:80]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:20 vertical:30]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:25 vertical:20]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:30 vertical:-70]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:60 vertical:96]];
-        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:70 vertical:86]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:0 vertical:-0.0018]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:3 vertical:0.0038]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:7 vertical:0.002]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:14 vertical:0.0080]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:20 vertical:0.0030]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:25 vertical:0.0020]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:30 vertical:-0.0070]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:60 vertical:0.0096]];
+        [points addObject:[[KLTLineChartPoint alloc] initWithValueOfHorizontal:70 vertical:0.0086]];
         line.points = points;
         [lines addObject:line];
     }

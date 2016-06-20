@@ -26,8 +26,8 @@ static const CGFloat widthOfBGLine = 1; //表格的网格线宽度
 //static const CGFloat widthOfLine = 1; //折线宽度
 static const CGFloat autoComputeVRangeMAXRate = 0.2; //顶部留空百分比
 static const CGFloat autoComputeVRangeMINRate = 0.2; //底部留空百分比
-static const CGFloat autoComputeHRangeMAXRate = 0.0; //左部留空百分比
-static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
+static const CGFloat autoComputeHRangeMINRate = 0.0; //左部留空百分比
+static const CGFloat autoComputeHRangeMAXRate = 0.0; //右部留空百分比
 
 #pragma mark - Interface
 
@@ -290,6 +290,9 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     ONMain(
             _chartWidth = SAFEFLOAT(self.bounds.size.width - verticalTitleSpace-horizontalPadding*2);
             _chartHeight = SAFEFLOAT(self.bounds.size.height - (horizontalTitleSpace+verticalPadding)*2);
+            if (_chartWidth <= 0 || _chartHeight<=0){
+               return;
+            }
             _originP = CGPointMake(SAFEFLOAT(verticalTitleSpace+horizontalPadding), SAFEFLOAT(_chartHeight+verticalPadding+horizontalTitleSpace));
             
             WEAK_SELF(weakSelf);
