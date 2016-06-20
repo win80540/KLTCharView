@@ -290,6 +290,9 @@ static const CGFloat autoComputeHRangeMAXRate = 0.0; //右部留空百分比
     ONMain(
             _chartWidth = SAFEFLOAT(self.bounds.size.width - verticalTitleSpace-horizontalPadding*2);
             _chartHeight = SAFEFLOAT(self.bounds.size.height - (horizontalTitleSpace+verticalPadding)*2);
+#ifdef DEBUG
+           NSAssert(_chartWidth > 0 && _chartHeight > 0, @"错误的尺寸，一般出现在调用绑定时机错误时");
+#endif
             if (_chartWidth <= 0 || _chartHeight<=0){
                return;
             }
