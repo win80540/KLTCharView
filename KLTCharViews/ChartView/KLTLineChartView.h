@@ -113,7 +113,6 @@
  */
 @property (assign,nonatomic) double minValueOfVertical;
 
-
 - (instancetype)initWithFrame:(CGRect)frame NS_DESIGNATED_INITIALIZER;
 - (void)displayWithAnimation:(BOOL)isAnimation;
 @end
@@ -136,6 +135,8 @@
  */
 - (UIView *)lineChartView:(KLTLineChartView *)chartView tipViewOfPoint:(KLTLineChartPoint *)currentPoint inLine:(KLTLineChartLine *)currentLine avilibleRect:(CGRect)aRect;
 
+- (UIView *)lineChartView:(KLTLineChartView *)chartView nodataTipViewOfAvilibleRect:(CGRect)aRect;
+
 @end
 
 /**
@@ -157,6 +158,10 @@
 @interface KLTLineChartView (KLTTipInfo)
 
 @property (weak,nonatomic)  id<KLTLineChartTipViewDelegate> delegateOfTipView;
+/**
+ *  @brief  显示无数据提示框
+ */
+@property (nonatomic, assign) BOOL showNoDataTips;
 
 @end
 

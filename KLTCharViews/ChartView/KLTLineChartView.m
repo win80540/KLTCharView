@@ -287,42 +287,51 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
 - (void)displayWithAnimation:(BOOL)isAnimation{
     [self setNeedsDisplay];
     ONMain(
-        _chartWidth = SAFEFLOAT(self.bounds.size.width - verticalTitleSpace-horizontalPadding*2);
-        _chartHeight = SAFEFLOAT(self.bounds.size.height - (horizontalTitleSpace+verticalPadding)*2);
-        _originP = CGPointMake(SAFEFLOAT(verticalTitleSpace+horizontalPadding), SAFEFLOAT(_chartHeight+verticalPadding+horizontalTitleSpace));
-        
-        WEAK_SELF(weakSelf);
-        //清理view
-        [_containerView removeFromSuperview];
-        //重新生产contanerView
-        _containerView = [[UIView alloc] initWithFrame:CGRectMake(_originP.x, SAFEFLOAT(verticalPadding+horizontalTitleSpace), _chartWidth, _chartHeight)];
-        [_containerView setBackgroundColor:[UIColor clearColor]];
-        [self addSubview:_containerView];
-        
-        //画出每一条线
-        [self.lines enumerateObjectsUsingBlock:^(KLTLineChartLine * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-           [_containerView addSubview:[weakSelf createLineView:obj]];
-        }];
-
-        if (isAnimation) {
-            //动画
-            CAShapeLayer *makeLayer = [CAShapeLayer layer];
-            makeLayer.lineWidth = _chartHeight;
-            makeLayer.strokeColor = [UIColor blackColor].CGColor;
-            UIBezierPath *path = [UIBezierPath bezierPath];
-            [path moveToPoint:CGPointMake(0, _chartHeight/2.0)];
-            [path addLineToPoint:CGPointMake(_chartWidth, _chartHeight/2.0)];
-            makeLayer.path = path.CGPath;
-            _containerView.layer.mask = makeLayer;
+            _chartWidth = SAFEFLOAT(self.bounds.size.width - verticalTitleSpace-horizontalPadding*2);
+            _chartHeight = SAFEFLOAT(self.bounds.size.height - (horizontalTitleSpace+verticalPadding)*2);
+            _originP = CGPointMake(SAFEFLOAT(verticalTitleSpace+horizontalPadding), SAFEFLOAT(_chartHeight+verticalPadding+horizontalTitleSpace));
             
-            CABasicAnimation *maskAnim = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
-            maskAnim.fromValue = @(0);
-            maskAnim.toValue = @(1);
-            maskAnim.duration = 2;
-            maskAnim.removedOnCompletion = YES;
-            maskAnim.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
-            [makeLayer addAnimation:maskAnim forKey:@"maskLayerAnimation"];
-        }
+            WEAK_SELF(weakSelf);
+            //清理view
+            [_containerView removeFromSuperview];
+            //重新生产contanerView
+            _containerView = [[UIView alloc] initWithFrame:CGRectMake(_originP.x, SAFEFLOAT(verticalPadding+horizontalTitleSpace), _chartWidth, _chartHeight)];
+            [_containerView setBackgroundColor:[UIColor clearColor]];
+            [self addSubview:_containerView];
+            
+            //画出每一条线
+            [self.lines enumerateObjectsUsingBlock:^(KLTLineChartLine * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+               [_containerView addSubview:[weakSelf createLineView:obj]];
+            }];
+
+            if (isAnimation) {
+                //动画
+                CAShapeLayer *makeLayer = [CAShapeLayer layer];
+                makeLayer.lineWidth = _chartHeight;
+                makeLayer.strokeColor = [UIColor blackColor].CGColor;
+                UIBezierPath *path = [UIBezierPath bezierPath];
+                [path moveToPoint:CGPointMake(0, _chartHeight/2.0)];
+                [path addLineToPoint:CGPointMake(_chartWidth, _chartHeight/2.0)];
+                makeLayer.path = path.CGPath;
+                _containerView.layer.mask = makeLayer;
+                
+                CABasicAnimation *maskAnim = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
+                maskAnim.fromValue = @(0);
+                maskAnim.toValue = @(1);
+                maskAnim.duration = 2;
+                maskAnim.removedOnCompletion = YES;
+                maskAnim.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+                [makeLayer addAnimation:maskAnim forKey:@"maskLayerAnimation"];
+            }
+           
+           if (self.showNoDataTips){
+               if([self.delegateOfTipView respondsToSelector:@selector(lineChartView:nodataTipViewOfAvilibleRect:)]){
+                  UIView *nodataTipView = [self.delegateOfTipView lineChartView:self nodataTipViewOfAvilibleRect:self.bounds];
+                   if (nodataTipView) {
+                       [self addSubview:nodataTipView];
+                   }
+               }
+           }
     );
 }
 
@@ -682,6 +691,7 @@ static char kContext;
 @end
 
 static char kDelegateTipView;
+static char kDelegateTipViewShowNoDataTips;
 
 @implementation KLTLineChartView (KLTTipInfo)
 
@@ -690,6 +700,17 @@ static char kDelegateTipView;
 }
 - (id)delegateOfTipView{
     return objc_getAssociatedObject(self, &kDelegateTipView);
+}
+
+- (void)setShowNoDataTips:(BOOL)showNoDataTips{
+    objc_setAssociatedObject(self, &kDelegateTipViewShowNoDataTips, @(showNoDataTips), OBJC_ASSOCIATION_RETAIN);
+}
+- (BOOL)showNoDataTips{
+    NSNumber *number = objc_getAssociatedObject(self, &kDelegateTipViewShowNoDataTips);
+    if (number) {
+        return [number boolValue];
+    }
+    return NO;
 }
 
 @end
