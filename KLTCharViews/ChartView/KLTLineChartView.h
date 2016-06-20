@@ -129,7 +129,7 @@
  *  @param line      当前的询问的线的实例
  *  @param aRect     可见的范围CGRect结构
  *
- *  @discussion      应该根据参数中point.x,point.y和aRect来确定view的位置
+ *  @discussion      应该根据参数中point.x,point.y和aRect来确定view的位置,不保证在主线程，代理中如果有涉及UI修改需要自己保证主线程
  *
  *  @return 类型UIView *,tipView会添加到KLTLineChartView
  */
@@ -141,7 +141,7 @@
  *  @param chartView 当前的lineChartView
  *  @param aRect     可见的范围CGRect结构
  *
- *  @return 应该根据参数中的aRect来确定view的位置
+ *  @return 应该根据参数中的aRect来确定view的位置，保证在主线程
  */
 - (UIView *)lineChartView:(KLTLineChartView *)chartView nodataTipViewOfAvilibleRect:(CGRect)aRect;
 

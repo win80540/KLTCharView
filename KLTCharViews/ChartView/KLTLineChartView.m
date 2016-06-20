@@ -329,11 +329,13 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
            
            if (self.showNoDataTips){
                if([self.delegateOfTipView respondsToSelector:@selector(lineChartView:nodataTipViewOfAvilibleRect:)]){
-                  UIView *nodataTipView = [self.delegateOfTipView lineChartView:self nodataTipViewOfAvilibleRect:self.bounds];
-                   if (nodataTipView) {
-                       [self addSubview:nodataTipView];
-                       _nodataTipView = nodataTipView;
-                   }
+                   ONMain(
+                      UIView *nodataTipView = [self.delegateOfTipView lineChartView:self nodataTipViewOfAvilibleRect:self.bounds];
+                       if (nodataTipView) {
+                           [self addSubview:nodataTipView];
+                           _nodataTipView = nodataTipView;
+                       }
+                          );
                }
            }
     );
