@@ -70,6 +70,7 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
     CGPoint _originP ;
     BOOL _autoComputeVRange;
     BOOL _autoComputeHRange;
+    UIView *_nodataTipView;
 }
 @property (strong,nonatomic) UIView *containerView;
 @property (strong,nonatomic) CAShapeLayer *bgLayer;
@@ -324,11 +325,14 @@ static const CGFloat autoComputeHRangeMINRate = 0.0; //右部留空百分比
                 [makeLayer addAnimation:maskAnim forKey:@"maskLayerAnimation"];
             }
            
+           [_nodataTipView removeFromSuperview];
+           
            if (self.showNoDataTips){
                if([self.delegateOfTipView respondsToSelector:@selector(lineChartView:nodataTipViewOfAvilibleRect:)]){
                   UIView *nodataTipView = [self.delegateOfTipView lineChartView:self nodataTipViewOfAvilibleRect:self.bounds];
                    if (nodataTipView) {
                        [self addSubview:nodataTipView];
+                       _nodataTipView = nodataTipView;
                    }
                }
            }
