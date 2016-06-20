@@ -122,7 +122,7 @@
 @protocol KLTLineChartTipViewDelegate<NSObject>
 @optional
 /**
- *  @brief 询问delegate需要显示的tipView
+ *  @brief 询问delegateOfTipView需要显示的tipView
  *
  *  @param chartView 当前的lineChartView
  *  @param point     当前的询问的点的实例
@@ -135,6 +135,14 @@
  */
 - (UIView *)lineChartView:(KLTLineChartView *)chartView tipViewOfPoint:(KLTLineChartPoint *)currentPoint inLine:(KLTLineChartLine *)currentLine avilibleRect:(CGRect)aRect;
 
+/**
+ *  @brief 当showNoDataTips标志为YES时，询问delegateOfTipView需要显示的NodataTipView
+ *
+ *  @param chartView 当前的lineChartView
+ *  @param aRect     可见的范围CGRect结构
+ *
+ *  @return 应该根据参数中的aRect来确定view的位置
+ */
 - (UIView *)lineChartView:(KLTLineChartView *)chartView nodataTipViewOfAvilibleRect:(CGRect)aRect;
 
 @end
