@@ -427,17 +427,11 @@ static const CGFloat autoComputeHRangeMAXRate = 0.0; //右部留空百分比
     if (maxH == minH) {
         minH = maxH - ABS(maxH);
     }
-    if (minH>=0) {
-        minH = 0;
-    }
     double rangeH = SAFEFLOAT(maxH - minH);
     //修改刻度范围
     _maxValueOfHorizontal = maxH+SAFEFLOAT(autoComputeHRangeMAXRate)*rangeH;
-    if (minH>=0) {
-        _minValueOfHorizontal = 0;
-    }else{
-        _minValueOfHorizontal = minH-SAFEFLOAT(autoComputeHRangeMINRate)*rangeH;
-    }
+    _minValueOfHorizontal = minH-SAFEFLOAT(autoComputeHRangeMINRate)*rangeH;
+
     [self rangeChanged];
 }
 
