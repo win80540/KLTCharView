@@ -1,6 +1,6 @@
 //
 //  KLTLineChartView.h
-//  
+//
 //
 //  Created by 田凯 on 15/11/21.
 //  Copyright © 2015年 Netease. All rights reserved.
@@ -8,11 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
-#ifndef KLTChartView_h
-#define KLTChartView_h
-#define SAFEFLOAT(x) (isnan((x))?1:(x))
+#ifndef SAFEFLOAT
+#define SAFEFLOAT(x) (isnan((x))?0:(x))
 #endif
-
 @protocol KLTLineChartDataSource <NSObject>
 @optional
 - (NSString *)titleOfHorizontalIndex:(NSUInteger)idx withValue:(double)value;
@@ -46,7 +44,7 @@
 @end
 
 @interface KLTLineChartLine : NSObject
-@property (strong, nonatomic) NSString *identity;
+@property (strong, nonatomic) NSString *identity;   //line的标识符号，默认设置随机UUID
 @property (strong, nonatomic) UIColor *lineColor;
 @property (strong, nonatomic) UIColor *fillColor;
 @property (assign, nonatomic) CGFloat lineWidth;
@@ -104,6 +102,7 @@
  @brief X轴最小值
  */
 @property (assign,nonatomic) double minValueOfHorizontal;
+
 /*
  @brief Y轴最大值
  */
@@ -112,6 +111,21 @@
  @brief Y轴最小值
  */
 @property (assign,nonatomic) double minValueOfVertical;
+/**
+ *  是否已经绑定数据
+ */
+@property (nonatomic, assign) BOOL isBinded;
+/**
+ *  是否需要渐变色
+ */
+@property (nonatomic, assign) BOOL needGradient;
+
+/**
+ *  折线部分的宽，高，原点坐标
+ */
+@property (nonatomic, assign, readonly) CGFloat chartWidth;
+@property (nonatomic, assign, readonly) CGFloat chartHeight;
+@property (nonatomic, assign, readonly) CGPoint originP;
 
 - (instancetype)initWithFrame:(CGRect)frame NS_DESIGNATED_INITIALIZER;
 - (void)displayWithAnimation:(BOOL)isAnimation;
@@ -145,6 +159,44 @@
  */
 - (UIView *)lineChartView:(KLTLineChartView *)chartView nodataTipViewOfAvilibleRect:(CGRect)aRect;
 
+typedef NS_ENUM(NSInteger, KLTLineChartTouchEventType) {
+    KLTLineChartTouchEventBegan = 0,
+    KLTLineChartTouchEventMoved = 1,
+    KLTLineChartTouchEventEnded = 2,
+    KLTLineChartTouchEventCancelled = 3
+};
+
+/**
+ *  @brief 询问delegate 用户touch某个点的时候需要显示的tipView
+ *  !important            UIView是临时的，touch事件变动就会消失
+ *
+ *  @param chartView      当前的lineChartView
+ *  @param touchedPoint   当前触摸点的实例
+ *  @param touchedLine    当前的询问的线的实例
+ *  @param eventType      当前的时间类型 @see KLTLineChartTouchEventType
+ *  @param aRect          可见的范围CGRect结构
+ *
+ *  @discussion  应该根据参数中point.x,point.y和aRect来确定view的位置,不保证在主线程，代理中如果有涉及UI修改需要自己保证主线程
+ *
+ *  @return 类型UIView *,tipView会添加到KLTLineChartView
+ */
+- (UIView *)lineChartView:(KLTLineChartView *)chartView autoRemoveTouchTipViewOfPoint:(KLTLineChartPoint *)touchedPoint inLine:(KLTLineChartLine *)touchedLine eventType:(KLTLineChartTouchEventType)eventType avilibleRect:(CGRect)aRect;
+
+/**
+ *  @brief 询问delegate 用户touch某个点的时候需要显示的tipView
+ *  !important            UIView不是临时的，需要手动清理 @see clearTouchTipView
+ *
+ *  @param chartView      当前的lineChartView
+ *  @param touchedPoint   当前触摸点的实例
+ *  @param touchedLine    当前的询问的线的实例
+ *  @param eventType      当前的时间类型 @see KLTLineChartTouchEventType
+ *  @param aRect          可见的范围CGRect结构
+ *
+ *  @discussion  应该根据参数中point.x,point.y和aRect来确定view的位置,不保证在主线程，代理中如果有涉及UI修改需要自己保证主线程
+ *
+ *  @return 类型UIView *,tipView会添加到KLTLineChartView
+ */
+- (UIView *)lineChartView:(KLTLineChartView *)chartView touchTipViewOfPoint:(KLTLineChartPoint *)touchedPoint inLine:(KLTLineChartLine *)touchedLine eventType:(KLTLineChartTouchEventType)eventType avilibleRect:(CGRect)aRect;
 @end
 
 /**
@@ -170,6 +222,33 @@
  *  @brief  显示无数据提示框
  */
 @property (nonatomic, assign) BOOL showNoDataTips;
+
+/**
+ *  @brief 清理固定显示的 tipView, 所有line的tipview都会清理
+ *
+ */
+- (void)clearTipView;
+
+/**
+ *  @brief 清理所有保留显示的 touchTipView, 所有line的touchTipView都会清理
+ *
+ */
+- (void)clearTouchTipView;
+/**
+ *  @brief 清理指定line 的 tipView
+ *
+ * @param identity 需要清理的line的标识符
+ *
+ */
+- (void)clearTipViewForLineIdentity:(NSString *)identity;
+
+/**
+ *  @brief 清理指定line 的 touchTipView
+ *
+ * @param identity 需要清理的line的标识符
+ *
+ */
+- (void)clearTouchTipViewForLineIdentity:(NSString *)identity;
 
 @end
 

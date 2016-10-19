@@ -8,9 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
-#ifndef KLTChartView_h
-#define KLTChartView_h
-#define SAFEFLOAT(x) (isnan((x))?1:(x))
+#ifndef SAFEFLOAT
+#define SAFEFLOAT(x) (isnan((x))?0:(x))
 #endif
 
 #pragma mark - KLTPieItem
