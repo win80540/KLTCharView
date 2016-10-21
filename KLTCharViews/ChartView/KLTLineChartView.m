@@ -54,7 +54,7 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
 @property (strong, nonatomic) KLTLineChartLine *line;
 @property (assign, nonatomic) CGPoint originP;
 @property (strong, nonatomic) KLTLineChartLineBGView *bgView;
-@property (strong, nonatomic) NSMutableSet *delayDeleteViewQueue;             // 每个点都可以有的提示框
+@property (strong, nonatomic) NSMutableSet *delayDeleteViewSet;             // 每个点都可以有的提示框
 @property (strong, nonatomic) NSMutableSet *tipViewSet;             // 每个点都可以有的提示框
 @property (strong, nonatomic) NSMutableSet *touchTipViewSet;        // 只有在触摸某个点时才显示的该点的提示框
 @property (weak, nonatomic) UIView *touchTempTipView;               // 只有在触摸某个点时才显示的该点的提示框，会自动消失
@@ -144,7 +144,7 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
     if(self = [super initWithFrame:frame]){
         [self setBackgroundColor:[UIColor clearColor]];
         _touchTipViewSet = [NSMutableSet new];
-        _delayDeleteViewQueue = [NSMutableSet new];
+        _delayDeleteViewSet = [NSMutableSet new];
         _lockQueueForTipViewSet = dispatch_queue_create("com.KLT.lineChartView.tipViewSetLockQueue", DISPATCH_QUEUE_CONCURRENT);
     }
     return self;
@@ -335,7 +335,7 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
 - (void)delayRemoveView:(UIView *)view {
     // 直接remove会导致touch事件中断，延迟执行
     [view setHidden:YES];
-    [self.delayDeleteViewQueue addObject:view];
+    [self.delayDeleteViewSet addObject:view];
     [self.parentView addObserver:self forKeyPath:@"isTouching" options:NSKeyValueObservingOptionNew context:NULL];
 }
 
@@ -343,14 +343,14 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
     if ([keyPath isEqualToString:@"isTouching"]) {
         if (![change[NSKeyValueChangeNewKey] boolValue]) {
             ONMain({
-                NSSet *deleteArray = [self.delayDeleteViewQueue copy];
+                NSSet *deleteArray = [self.delayDeleteViewSet copy];
                 [deleteArray enumerateObjectsUsingBlock:^(UIView * _Nonnull obj, BOOL * _Nonnull stop) {
                     if (self.parentView.isTouching) {
                         *stop = YES;
                         return;
                     }
                     [obj removeFromSuperview];
-                    [self.delayDeleteViewQueue removeObject:obj];
+                    [self.delayDeleteViewSet removeObject:obj];
                 }];
             });
         }
@@ -984,7 +984,6 @@ static char kContext;
 
 static char kDelegateTipView;
 static char kDelegateTipViewShowNoDataTips;
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wincomplete-implementation"
 @implementation KLTLineChartView (KLTTipInfo)

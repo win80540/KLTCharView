@@ -11,12 +11,17 @@
 #ifndef SAFEFLOAT
 #define SAFEFLOAT(x) (isnan((x))?0:(x))
 #endif
+
 @protocol KLTLineChartDataSource <NSObject>
+
 @optional
 - (NSString *)titleOfHorizontalIndex:(NSUInteger)idx withValue:(double)value;
 - (NSString *)titleOfVerticalIndex:(NSUInteger)idx withValue:(double)value;
+
 @end
+
 @protocol KLTLineChartDelegate <NSObject>
+
 @optional
 - (CGSize)titleOffsetOfHorizontalIndex:(NSUInteger)idx;
 - (CGSize)titleOffsetOfVerticalIndex:(NSUInteger)idx;
@@ -44,6 +49,7 @@
 @end
 
 @interface KLTLineChartLine : NSObject
+
 @property (strong, nonatomic) NSString *identity;   //line的标识符号，默认设置随机UUID
 @property (strong, nonatomic) UIColor *lineColor;
 @property (strong, nonatomic) UIColor *fillColor;
@@ -55,6 +61,7 @@
 @end
 
 @interface KLTLineChartView : UIView
+
 @property (weak,nonatomic)  id<KLTLineChartDataSource> dataSource;
 
 @property (weak,nonatomic)  id<KLTLineChartDelegate> delegate;
@@ -129,11 +136,13 @@
 
 - (instancetype)initWithFrame:(CGRect)frame NS_DESIGNATED_INITIALIZER;
 - (void)displayWithAnimation:(BOOL)isAnimation;
+
 @end
 
 #pragma mark - tip category
 
 @protocol KLTLineChartTipViewDelegate<NSObject>
+
 @optional
 /**
  *  @brief 询问delegateOfTipView需要显示的tipView
@@ -197,6 +206,7 @@ typedef NS_ENUM(NSInteger, KLTLineChartTouchEventType) {
  *  @return 类型UIView *,tipView会添加到KLTLineChartView
  */
 - (UIView *)lineChartView:(KLTLineChartView *)chartView touchTipViewOfPoint:(KLTLineChartPoint *)touchedPoint inLine:(KLTLineChartLine *)touchedLine eventType:(KLTLineChartTouchEventType)eventType avilibleRect:(CGRect)aRect;
+
 @end
 
 /**
