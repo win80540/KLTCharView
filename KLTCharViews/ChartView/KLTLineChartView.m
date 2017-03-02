@@ -25,11 +25,12 @@ static const CGFloat horizontalPadding = 15;
 static const CGFloat verticalPadding = 15;
 static const CGFloat widthOfBGLine = 1; //表格的网格线宽度
 //static const CGFloat widthOfLine = 1; //折线宽度
-static const CGFloat autoComputeVRangeMAXRate = 0.5; //顶部留空百分比
-static const CGFloat autoComputeVRangeMINRate = 0.3; //底部留空百分比
-static const CGFloat autoComputeHRangeMINRate = 0.0; //左部留空百分比
-static const CGFloat autoComputeHRangeMAXRate = 0.0; //右部留空百分比
+//static const CGFloat autoComputeVRangeMAXRate = 0.5; //顶部留空百分比
+//static const CGFloat autoComputeVRangeMINRate = 0.3; //底部留空百分比
+//static const CGFloat autoComputeHRangeMINRate = 0.0; //左部留空百分比
+//static const CGFloat autoComputeHRangeMAXRate = 0.0; //右部留空百分比
 static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
+static NSString * const kObserverTouching = @"isTouching";
 
 #pragma mark - Interface
 
@@ -48,6 +49,7 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
 
 @interface KLTLineChartLineView : UIView{
     dispatch_queue_t _lockQueueForTipViewSet;
+    BOOL _hasObserverTouching;
 }
 
 @property (weak, nonatomic) KLTLineChartView *parentView;
@@ -334,13 +336,16 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
 
 - (void)delayRemoveView:(UIView *)view {
     // 直接remove会导致touch事件中断，延迟执行
-    [view setHidden:YES];
+    ONMain([view setHidden:YES];);
     [self.delayDeleteViewSet addObject:view];
-    [self.parentView addObserver:self forKeyPath:@"isTouching" options:NSKeyValueObservingOptionNew context:NULL];
+    if (!_hasObserverTouching) {
+        _hasObserverTouching = YES;
+        [self.parentView addObserver:self forKeyPath:kObserverTouching options:NSKeyValueObservingOptionNew context:NULL];
+    }
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if ([keyPath isEqualToString:@"isTouching"]) {
+    if ([keyPath isEqualToString:kObserverTouching]) {
         if (![change[NSKeyValueChangeNewKey] boolValue]) {
             ONMain({
                 NSSet *deleteArray = [self.delayDeleteViewSet copy];
@@ -354,6 +359,13 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
                 }];
             });
         }
+    }
+}
+
+- (void)dealloc {
+    if (_hasObserverTouching) {
+        _hasObserverTouching = NO;
+        [self.parentView removeObserver:self forKeyPath:kObserverTouching];
     }
 }
 
@@ -601,6 +613,10 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
 - (void)__initialize{
     [self setBackgroundColor:[UIColor colorWithWhite:0.9 alpha:1]];
     [self setUserInteractionEnabled:YES];
+    _autoComputeVRangeMAXRate = 0.5; //顶部留空百分比
+    _autoComputeVRangeMINRate = 0.3; //底部留空百分比
+    _autoComputeHRangeMINRate = 0.0; //左部留空百分比
+    _autoComputeHRangeMAXRate = 0.0; //右部留空百分比
     _colorOfHorizontalLines = [UIColor colorWithWhite:0.8 alpha:1];
     _colorOfVerticalLines = [UIColor colorWithWhite:0.8 alpha:1];
     _numberOfHorizontalLines = 5;
@@ -648,8 +664,8 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
     }
     double rangeV = SAFEFLOAT(maxV - minV);
     //修改刻度范围
-    _maxValueOfVertical = maxV+SAFEFLOAT(autoComputeVRangeMAXRate)*rangeV;
-    _minValueOfVertical = minV-SAFEFLOAT(autoComputeVRangeMINRate)*rangeV;
+    _maxValueOfVertical = maxV+SAFEFLOAT(_autoComputeVRangeMAXRate)*rangeV;
+    _minValueOfVertical = minV-SAFEFLOAT(_autoComputeVRangeMINRate)*rangeV;
     
     [self rangeChanged];
 }
@@ -676,11 +692,11 @@ static NSString * const lineTitleFormatDefaultStr = @"%.2lf";
     }
     double rangeH = SAFEFLOAT(maxH - minH);
     //修改刻度范围
-    _maxValueOfHorizontal = maxH+SAFEFLOAT(autoComputeHRangeMAXRate)*rangeH;
+    _maxValueOfHorizontal = maxH+SAFEFLOAT(_autoComputeHRangeMAXRate)*rangeH;
     if (minH>=0) {
         _minValueOfHorizontal = 0;
     }else{
-        _minValueOfHorizontal = minH-SAFEFLOAT(autoComputeHRangeMINRate)*rangeH;
+        _minValueOfHorizontal = minH-SAFEFLOAT(_autoComputeHRangeMINRate)*rangeH;
     }
     [self rangeChanged];
 }

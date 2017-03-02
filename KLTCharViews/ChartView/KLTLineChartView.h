@@ -8,14 +8,26 @@
 
 #import <UIKit/UIKit.h>
 
-#ifndef SAFEFLOAT
-#define SAFEFLOAT(x) (isnan((x))?0:(x))
-#endif
-
 @protocol KLTLineChartDataSource <NSObject>
 
 @optional
+/*
+ * @brief x轴刻度代理
+ *
+ * @param idx NSUinteger 第几个刻度
+ * @param value double 该刻度的值
+ *
+ * @return NSString * 返回所需要显示的字符串
+ */
 - (NSString *)titleOfHorizontalIndex:(NSUInteger)idx withValue:(double)value;
+/*
+ * @brief y轴刻度代理
+ *
+ * @param idx NSUinteger 第几个刻度
+ * @param value double 该刻度的值
+ *
+ * @return NSString * 返回所需要显示的字符串
+ */
 - (NSString *)titleOfVerticalIndex:(NSUInteger)idx withValue:(double)value;
 
 @end
@@ -23,16 +35,40 @@
 @protocol KLTLineChartDelegate <NSObject>
 
 @optional
+/*
+ * @brief x轴刻度的偏移
+ *
+ * @param idx NSUinteger 第几个刻度
+ *
+ */
 - (CGSize)titleOffsetOfHorizontalIndex:(NSUInteger)idx;
+/*
+ * @brief y轴刻度的偏移
+ *
+ * @param idx NSUinteger 第几个刻度
+ *
+ */
 - (CGSize)titleOffsetOfVerticalIndex:(NSUInteger)idx;
+/*
+ * @brief 定制背景横线的颜色
+ *
+ * @param idx NSUinteger 第几个线
+ *
+ */
 - (UIColor *)colorForHorizontalSeparateLineOfIndex:(NSUInteger)idx;
+/*
+ * @brief 定制背景竖线的颜色
+ *
+ * @param idx NSUinteger 第几个线
+ *
+ */
 - (UIColor *)colorForVerticalSeparateLineOfIndex:(NSUInteger)idx;
 /*
- @brief 定制背景横线的path代理（如虚线样式，线宽）
+ * @brief 定制背景横线的path代理（如虚线样式，线宽）
  */
 - (void)customHorizontalSeparateLinePath:(UIBezierPath *)path styleOfIndex:(NSUInteger)idx;
 /*
- @brief 定制背景竖线的path代理（如虚线样式，线宽）
+ * @brief 定制背景竖线的path代理（如虚线样式，线宽）
  */
 - (void)customVerticalSeparateLinePath:(UIBezierPath *)path styleOfIndex:(NSUInteger)idx;
 
@@ -49,8 +85,8 @@
 @end
 
 @interface KLTLineChartLine : NSObject
-
-@property (strong, nonatomic) NSString *identity;   //line的标识符号，默认设置随机UUID
+/// line的标识符号，默认设置随机UUID
+@property (strong, nonatomic) NSString *identity;
 @property (strong, nonatomic) UIColor *lineColor;
 @property (strong, nonatomic) UIColor *fillColor;
 @property (assign, nonatomic) CGFloat lineWidth;
@@ -69,55 +105,75 @@
 @property (strong,nonatomic) NSArray<KLTLineChartLine *> *lines;
 
 /*
- @brief 横向网格线个数
+ * @brief 横向网格线个数
  */
 @property (assign,nonatomic) NSUInteger numberOfHorizontalLines;
 /*
- @brief 纵向网格线个数
+ * @brief 纵向网格线个数
  */
 @property (assign,nonatomic) NSUInteger numberOfVerticalLines;
 
 /*
- @brief 横向网格线的颜色
- @discussion 如果实现了 colorForHorizontalSeparateLineOfIndex: 代理方法，该值无效
+ * @brief 横向网格线的颜色
+ * @discussion 如果实现了 colorForHorizontalSeparateLineOfIndex: 代理方法，该值无效
  */
 @property (strong,nonatomic) UIColor *colorOfHorizontalLines;
 /*
- @brief 纵向网格线的颜色
- @discussion 如果实现了 colorForVerticalSeparateLineOfIndex: 代理方法，该值无效
+ * @brief 纵向网格线的颜色
+ * @discussion 如果实现了 colorForVerticalSeparateLineOfIndex: 代理方法，该值无效
  */
 @property (strong,nonatomic) UIColor *colorOfVerticalLines;
 
 /*
- @brief Y轴刻度的属性
+ * @brief Y轴刻度的属性
  */
 @property (strong,nonatomic) NSDictionary *attributeOfVerticalText;
 /*
- @brief X轴刻度的属性
+ * @brief X轴刻度的属性
  */
 @property (strong,nonatomic) NSDictionary *attributeOfHorizontalText;
 
+/// maxValueOfHorizontal，minValueOfHorizontal，maxValueOfVertical，minValueOfVertical可以都不设值，都不设的时候会根据数据计算图表的X轴和Y轴范围，
+
 /*
- maxValueOfHorizontal，minValueOfHorizontal，maxValueOfVertical，minValueOfVertical可以都不设值，
- 都不设的时候会根据数据计算图表的X轴和Y轴范围，
- */
-/*
- @brief X轴最大值
+ * @brief X轴最大值
  */
 @property (assign,nonatomic) double maxValueOfHorizontal;
 /*
- @brief X轴最小值
+ * @brief X轴最小值
  */
 @property (assign,nonatomic) double minValueOfHorizontal;
 
 /*
- @brief Y轴最大值
+ * @brief Y轴最大值
  */
 @property (assign,nonatomic) double maxValueOfVertical;
 /*
- @brief Y轴最小值
+ * @brief Y轴最小值
  */
 @property (assign,nonatomic) double minValueOfVertical;
+
+/*
+ * @brief 顶部留空百分比
+ * @discussion 只有Y轴自动计算时有效
+ */
+@property (assign,nonatomic) CGFloat autoComputeVRangeMAXRate;
+/*
+ * @brief 底部留空百分比
+ * @discussion 只有Y轴自动计算时有效
+ */
+@property (assign,nonatomic) CGFloat autoComputeVRangeMINRate;
+/*
+ * @brief 左部留空百分比
+ * @discussion 只有X轴自动计算时有效
+ */
+@property (assign,nonatomic) CGFloat autoComputeHRangeMINRate;
+/*
+ * @brief 右部留空百分比
+ * @discussion 只有X轴自动计算时有效
+ */
+@property (assign,nonatomic) CGFloat autoComputeHRangeMAXRate;
+
 /**
  *  是否已经绑定数据
  */
@@ -229,12 +285,12 @@ typedef NS_ENUM(NSInteger, KLTLineChartTouchEventType) {
 
 @property (weak,nonatomic)  id<KLTLineChartTipViewDelegate> delegateOfTipView;
 /**
- *  @brief  显示无数据提示框
+ * @brief  显示无数据提示框
  */
 @property (nonatomic, assign) BOOL showNoDataTips;
 
 /**
- *  @brief 清理固定显示的 tipView, 所有line的tipview都会清理
+ * @brief 清理固定显示的 tipView, 所有line的tipview都会清理
  *
  */
 - (void)clearTipView;
@@ -245,7 +301,7 @@ typedef NS_ENUM(NSInteger, KLTLineChartTouchEventType) {
  */
 - (void)clearTouchTipView;
 /**
- *  @brief 清理指定line 的 tipView
+ * @brief 清理指定line 的 tipView
  *
  * @param identity 需要清理的line的标识符
  *
@@ -253,7 +309,7 @@ typedef NS_ENUM(NSInteger, KLTLineChartTouchEventType) {
 - (void)clearTipViewForLineIdentity:(NSString *)identity;
 
 /**
- *  @brief 清理指定line 的 touchTipView
+ * @brief 清理指定line 的 touchTipView
  *
  * @param identity 需要清理的line的标识符
  *
