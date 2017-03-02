@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		369A9F7E1E66620E007CE32F /* KLTRadarChartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 369A9F7D1E66620E007CE32F /* KLTRadarChartView.m */; };
 		36A866391C1820B60070985E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 36A866381C1820B60070985E /* main.m */; };
 		36A8663C1C1820B60070985E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 36A8663B1C1820B60070985E /* AppDelegate.m */; };
 		36A8663F1C1820B60070985E /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 36A8663E1C1820B60070985E /* ViewController.m */; };
@@ -39,6 +40,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		369A9F7C1E66620E007CE32F /* KLTRadarChartView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KLTRadarChartView.h; sourceTree = "<group>"; };
+		369A9F7D1E66620E007CE32F /* KLTRadarChartView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KLTRadarChartView.m; sourceTree = "<group>"; };
 		36A866341C1820B60070985E /* KLTCharViews.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KLTCharViews.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		36A866381C1820B60070985E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		36A8663A1C1820B60070985E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -166,6 +169,8 @@
 				36A866701C1821290070985E /* KLTLineChartView.m */,
 				36A866711C1821290070985E /* KLTPieChartView.h */,
 				36A866721C1821290070985E /* KLTPieChartView.m */,
+				369A9F7C1E66620E007CE32F /* KLTRadarChartView.h */,
+				369A9F7D1E66620E007CE32F /* KLTRadarChartView.m */,
 			);
 			path = ChartView;
 			sourceTree = "<group>";
@@ -300,6 +305,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				369A9F7E1E66620E007CE32F /* KLTRadarChartView.m in Sources */,
 				36A866761C1821290070985E /* KLTPieChartView.m in Sources */,
 				36A866741C1821290070985E /* KLTDecimalAnimLabel.m in Sources */,
 				36A8663F1C1820B60070985E /* ViewController.m in Sources */,

@@ -10,15 +10,18 @@
 #import "KLTColumnChartView.h"
 #import "KLTLineChartView.h"
 #import "KLTPieChartView.h"
-@interface ViewController ()<KLTLineChartDataSource,KLTLineChartDelegate,KLTLineChartTipViewDelegate>
+#import "KLTRadarChartView.h"
+
+@interface ViewController ()<KLTLineChartDataSource,KLTLineChartDelegate,KLTLineChartTipViewDelegate, KLTRadarChartViewDataSource, KLTRadarChartViewDelegate>
 {
     
 }
-@property (strong,nonatomic) UIScrollView *scrollView;
-@property (strong,nonatomic) KLTPieChartView *pieView;
-@property (strong,nonatomic) KLTLineChartView *lineChartView;
-@property (strong,nonatomic) KLTColumnChartView *columnChartView;
-@property (strong,nonatomic) UIButton *refreshBtn;
+@property (strong, nonatomic) UIScrollView *scrollView;
+@property (strong, nonatomic) KLTPieChartView *pieView;
+@property (strong, nonatomic) KLTLineChartView *lineChartView;
+@property (strong, nonatomic) KLTColumnChartView *columnChartView;
+@property (strong, nonatomic) KLTRadarChartView *radarChartView;
+@property (strong, nonatomic) UIButton *refreshBtn;
 @end
 
 @implementation ViewController
@@ -29,11 +32,12 @@
     [self.view addSubview:self.scrollView];
     WEAK_SELF(weakSelf);
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self.scrollView addSubview:self.radarChartView];
         [self.scrollView addSubview:self.columnChartView];
         [self.scrollView addSubview:self.lineChartView];
         [self.scrollView addSubview:self.pieView];
         [self.scrollView addSubview:self.refreshBtn];
-        weakSelf.scrollView.contentSize = CGSizeMake(weakSelf.view.bounds.size.width, 570+50);
+        weakSelf.scrollView.contentSize = CGSizeMake(weakSelf.view.bounds.size.width, 770+50);
         [weakSelf refresh];
     });
     
@@ -52,7 +56,16 @@
     [self demo_pieChart];
     [self demo_lineChart];
     [self demo_columnChart];
+    [self demo_radarChart];
 }
+
+- (void)demo_radarChart {
+    self.radarChartView.dataSource = self;
+    self.radarChartView.delegate = self;
+    self.radarChartView.numberOfLatitude = 5;
+    [self.radarChartView displayWithAnimation:YES];
+}
+
 - (void)demo_columnChart{
     KLTColumnChartView *columnChartView = self.columnChartView;
     
@@ -242,6 +255,86 @@
     }
     return nil;
 }
+
+#pragma mark RadarDelegate
+
+- (NSUInteger)numberOfData:(KLTRadarChartView *)radarView {
+    return 2;
+}
+
+- (NSUInteger)numberOfDimensions:(KLTRadarChartView *)radarView {
+    return 5;
+}
+
+- (KLTRadarChartDataDimension *)dimensionForIndex:(NSUInteger)idx dataIndex:(NSUInteger)dataIdx inView:(KLTRadarChartView *)radarChartView {
+    KLTRadarChartDataDimension *data = [[KLTRadarChartDataDimension alloc] init];
+    if (dataIdx == 0) {
+         data.value = 5 + idx + idx % 2;
+    } else {
+        data.value = 5 + idx;
+    }
+    data.min = 2;
+    data.max = 12;
+    return data;
+}
+
+
+- (UIColor *)colorForBackgroundLatitudeAtIndex:(NSUInteger)idx total:(NSUInteger)total inView:(KLTRadarChartView *)radarChartView {
+    if (idx % 2 == 0) {
+        return [UIColor greenColor];
+    }
+    return [UIColor redColor];
+}
+
+- (UIColor *)colorForBackgroundLongitudeAtIndex:(NSUInteger)dimensionIdx total:(NSUInteger)total inView:(KLTRadarChartView *)radarChartView {
+    if (dimensionIdx % 2 == 0) {
+        return [UIColor redColor];
+    }
+    return [UIColor greenColor];
+}
+
+- (NSAttributedString *)titleForDimesionIdx:(NSUInteger)dimensionIdx inView:(KLTRadarChartView *)radarChartView {
+    NSString *str = [NSString stringWithFormat:@"Title is %lu", (unsigned long)dimensionIdx];
+    return [[NSAttributedString alloc] initWithString:str attributes:@{
+                                                                NSFontAttributeName : [UIFont systemFontOfSize:12],
+                                                                NSForegroundColorAttributeName : [UIColor blackColor]
+                                                                }];
+}
+
+- (void)customBackgroundLatitudePath:(UIBezierPath *)path styleOfIndex:(NSUInteger)idx total:(NSUInteger)total inView:(KLTRadarChartView *)radarChartView {
+    const CGFloat pattern[] = {2,2};
+    [path setLineDash:pattern count:2 phase:0];
+}
+- (void)customLatitudePath:(UIBezierPath *)path styleOfIndex:(NSUInteger)idx dataIdx:(NSUInteger)dataIdx inView:(KLTRadarChartView *)radarChartView {
+    const CGFloat pattern[] = {2,2};
+    [path setLineDash:pattern count:2 phase:0];
+}
+
+- (UIColor *)colorForDimensionValueLongitudeAtIndex:(NSUInteger)dimensionIdx total:(NSUInteger)total dataIdx:(NSUInteger)dataIdx inView:(KLTRadarChartView *)radarChartView {
+    return [UIColor redColor];
+}
+
+- (UIColor *)colorForDimensionValueLatitudeAtDataIdx:(NSUInteger)dataIdx inView:(KLTRadarChartView *)radarChartView {
+    if (dataIdx == 0) {
+        return [UIColor colorWithRed:0.4 green:0.1 blue:0.9 alpha:1];
+    }
+    return [UIColor colorWithRed:0.1 green:0.4 blue:0.5 alpha:1];
+}
+
+- (UIColor *)colorForDimensionValueFillAtDataIdx:(NSUInteger)dataIdx inView:(KLTRadarChartView *)radarChartView {
+    if (dataIdx == 0) {
+        return [UIColor colorWithRed:0.4 green:0.1 blue:0.9 alpha:0.5];
+    }
+    return [UIColor colorWithRed:0.1 green:0.4 blue:0.5 alpha:0.5];
+}
+
+- (UIView *)valueDescriptionViewForIdx:(NSUInteger)idx dataIdx:(NSUInteger)dataIdx data:(KLTRadarChartDataDimension *)data point:(CGPoint)point availableRect:(CGRect)avilableRect inView:(KLTRadarChartView *)radarChartView {
+    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, 5)];
+    view.backgroundColor = [UIColor redColor];
+    view.center = point;
+    return view;
+}
+
 #pragma mark Getter Setter
 - (UIScrollView *)scrollView{
     if (_scrollView) {
@@ -250,6 +343,14 @@
     _scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
     _scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     return _scrollView;
+}
+- (KLTRadarChartView *)radarChartView {
+    if (_radarChartView) {
+        return _radarChartView;
+    }
+    _radarChartView = [[KLTRadarChartView alloc] initWithFrame:CGRectMake(0, 20, 300,  200)];
+    _columnChartView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
+    return _radarChartView;
 }
 - (KLTColumnChartView *)columnChartView{
     if (_columnChartView) {
@@ -271,7 +372,7 @@
     if (_pieView) {
         return _pieView;
     }
-    _pieView = [[KLTPieChartView alloc] initWithFrame:CGRectMake(0, 20, self.view.bounds.size.width, 200)];
+    _pieView = [[KLTPieChartView alloc] initWithFrame:CGRectMake(0, 570, self.view.bounds.size.width, 200)];
     _pieView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     return _pieView;
 }
@@ -279,7 +380,7 @@
     if (_refreshBtn) {
         return _refreshBtn;
     }
-    _refreshBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 570, self.view.bounds.size.width, 50)];
+    _refreshBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 770, self.view.bounds.size.width, 50)];
     [_refreshBtn setTitle:@"Refresh" forState:UIControlStateNormal];
     [_refreshBtn addTarget:self action:@selector(doTapRefreshBtn:) forControlEvents:UIControlEventTouchUpInside];
     [_refreshBtn setTitleColor:[UIColor blueColor] forState:UIControlStateNormal];
